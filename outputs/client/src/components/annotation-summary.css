@@ -1,0 +1,4 @@
+.summary-dialog { width: min(560px, calc(100% - 24px)); }
+.annotation-chat-summary { border-top: 1px solid var(--ls-border); margin-top: 10px; padding-top: 9px; }
+.annotation-chat-summary > summary { cursor: pointer; font-size: 12px; font-weight: 600; }
+.annotation-chat-summary > .annotation-text-button { margin-block: 7px; }

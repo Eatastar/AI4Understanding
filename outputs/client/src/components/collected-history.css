@@ -1,0 +1,6 @@
+.collect-history-more { display: flex; align-items: center; gap: 8px; padding-block: 8px; }
+.collected-history { border: 1px solid var(--ls-border); padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; }
+.collected-history > summary { cursor: pointer; font-weight: 600; }
+.collected-history > article { border-top: 1px solid var(--ls-border); padding-top: 8px; margin-top: 8px; }
+.collected-history-source { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--ls-muted); font-size: 12px; }
+.collected-reference { margin-inline: 10px; display: flex; align-items: center; gap: 6px; color: var(--ls-muted); font-size: 12px; }

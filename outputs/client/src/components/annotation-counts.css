@@ -1,0 +1,9 @@
+.annotation-answer:has(> .annotation-count-layer) { position: relative; }
+.annotation-count-layer { position: absolute; inset: 0; z-index: 4; overflow: clip; pointer-events: none; user-select: none; }
+.annotation-highlight-count {
+  position: absolute; display: grid; place-items: center; min-width: 13px; height: 13px; padding: 0 2px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 999px;
+  color: var(--ls-muted, currentColor); background: var(--ls-panel, Canvas); font: 600 9px/1 system-ui, sans-serif;
+  transform: translateY(-50%);
+}
+.annotation-highlight-count::after { content: attr(data-count); }

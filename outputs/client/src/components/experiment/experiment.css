@@ -1,0 +1,76 @@
+.paper-experiment {
+  width: min(810px, calc(100vw - 24px)); max-width: none; max-height: min(88vh, 900px);
+  padding: 0; overflow: hidden; border: 1px solid var(--ls-border-strong); border-radius: 12px;
+  background: var(--ls-panel); color: var(--ls-text); box-shadow: 0 18px 68px #0004; font: inherit;
+}
+.paper-experiment[open] { display: flex; flex-direction: column; }
+.paper-experiment::backdrop { background: #1117; }
+.paper-experiment :is(h2, h3, h4, p, blockquote) { margin: 0; }
+.paper-experiment h2 { font-size: 1.15rem; }
+.paper-experiment h3 { font-size: 1rem; }
+.paper-experiment h4, .paper-experiment label { font-size: .86rem; }
+.paper-experiment button, .paper-experiment :is(input:not([type=checkbox]), select, textarea) {
+  font: inherit; color: var(--ls-text); background: var(--ls-panel); border: 1px solid var(--ls-border-strong); border-radius: 6px;
+}
+.paper-experiment button { cursor: pointer; padding: 6px 11px; line-height: 1.4; }
+.paper-experiment button:hover:not(:disabled) { background: var(--ls-hover); }
+.paper-experiment button:disabled { opacity: .5; cursor: default; }
+.paper-experiment button.experiment-primary { color: var(--ls-on-accent); background: var(--ls-accent); border-color: var(--ls-accent); }
+.paper-experiment button.experiment-primary:hover:not(:disabled) { background: var(--ls-accent-strong); }
+.paper-experiment :is(button, input, textarea, select, summary):focus-visible { outline: 2px solid var(--ls-focus, #a77a2e); outline-offset: 2px; }
+.paper-experiment :is(input:not([type=checkbox]), select, textarea) { min-width: 0; max-width: 100%; padding: 7px 9px; box-sizing: border-box; }
+.paper-experiment textarea { resize: vertical; }
+.paper-experiment .settings-select select { width: 100%; padding-inline-end: 30px; }
+.paper-experiment small, .experiment-hint { color: var(--ls-muted); font-size: .79rem; }
+.experiment-heading, .experiment-tabs, .experiment-rounds { flex: 0 0 auto; }
+.experiment-heading { display: flex; align-items: center; gap: 12px; padding: 14px 20px; }
+.experiment-heading > div { flex: 1; min-width: 0; }
+.experiment-heading small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.experiment-heading button { display: grid; place-items: center; padding: 6px; }
+.experiment-tabs { display: flex; gap: 4px; padding: 0 16px; overflow-x: auto; border-bottom: 1px solid var(--ls-border); }
+.experiment-tabs button { white-space: nowrap; border: 0; border-radius: 0; background: transparent; padding: 8px 12px; }
+.experiment-tabs button[aria-current=page] { box-shadow: inset 0 -2px var(--ls-accent); font-weight: 650; }
+.experiment-content { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; align-content: start; gap: 14px; padding: 18px 22px; }
+.paper-experiment label { display: grid; gap: 5px; min-width: 0; }
+.paper-experiment :is(fieldset, details) { min-width: 0; border: 1px solid var(--ls-border); border-radius: 6px; padding: 10px 12px; margin: 0; }
+.paper-experiment summary { font-weight: 600; cursor: pointer; }
+.paper-experiment details[open] > :not(summary) { margin-top: 9px; }
+.paper-experiment fieldset, .experiment-editor, .experiment-ballot, .experiment-ballot form, .experiment-results { display: grid; gap: 12px; min-width: 0; }
+.experiment-line, .paper-experiment footer, .experiment-rounds, .experiment-cases li, .experiment-pointer { display: flex; align-items: center; gap: 8px; }
+.experiment-line { justify-content: space-between; flex-wrap: wrap; }
+.experiment-line h3 { margin-bottom: 3px; }
+.paper-experiment footer { justify-content: flex-end; flex-wrap: wrap; }
+.experiment-rounds { flex-wrap: wrap; justify-content: space-between; padding: 8px 20px; border-top: 1px solid var(--ls-border); background: var(--ls-surface); }
+.experiment-rounds label { display: flex; align-items: center; gap: 8px; }
+.experiment-columns, .experiment-grades { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.experiment-grades { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.experiment-counts { display: flex; flex-wrap: wrap; gap: 7px 15px; color: var(--ls-muted); font-size: .8rem; }
+.experiment-pre, .experiment-quote blockquote, .experiment-turn > p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.experiment-quote { border-inline-start: 3px solid var(--ls-border-strong); padding: 8px 12px; background: var(--ls-surface); }
+.experiment-quote blockquote { max-height: 8rem; overflow: auto; }
+.experiment-cases { list-style-position: inside; margin: 0; padding: 0; }
+.experiment-cases li { padding: 9px 0; border-bottom: 1px solid var(--ls-border); }
+.experiment-cases li > div, .experiment-pointer > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.experiment-cases li strong, .experiment-pointer small, .experiment-slices small, .experiment-table th small { display: block; }
+.experiment-slices { max-height: 15rem; overflow: auto; }
+.experiment-slices label { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; overflow-wrap: anywhere; }
+.experiment-slices small { white-space: pre-wrap; }
+.experiment-arms { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.experiment-arms li { padding: 7px 10px; background: var(--ls-surface); border-radius: 5px; }
+.experiment-arms li strong { margin-inline-end: 5px; }
+.paper-experiment progress { width: 100%; accent-color: var(--ls-accent); }
+.experiment-turn { padding: 9px 0; border-bottom: 1px solid var(--ls-border); overflow-wrap: anywhere; }
+.experiment-turn > p { font-weight: 600; margin: 4px 0 9px; }
+.experiment-table { overflow-x: auto; }
+.experiment-table table { border-collapse: collapse; min-width: 100%; font-size: .83rem; font-variant-numeric: tabular-nums; }
+.experiment-table caption { text-align: start; font-weight: 650; padding-bottom: 7px; }
+.experiment-table :is(td, th) { text-align: start; vertical-align: top; border-bottom: 1px solid var(--ls-border); padding: 6px; }
+.experiment-error { color: var(--ls-danger, #a03126); overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .paper-experiment { width: calc(100vw - 10px); max-height: 95vh; }
+  .experiment-heading, .experiment-content, .experiment-rounds { padding: 10px; }
+  .experiment-columns, .experiment-grades { grid-template-columns: 1fr; }
+  .experiment-tabs { padding: 0 4px; }
+  .experiment-tabs button { padding: 7px; }
+  .experiment-pointer { flex-wrap: wrap; }
+}

@@ -1,0 +1,17 @@
+.translation-trigger { flex: none; }
+.translation-model { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ls-muted); font-size: 11px; }
+.translation-model span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.translation-result .annotation-card-header { min-height: 42px; padding-inline: 13px 9px; gap: 12px; }
+.translation-result .annotation-card-header-actions { flex: none; }
+.translation-result .annotation-card-scroll { padding: 16px; font-size: 13px; line-height: 1.8; }
+.translation-result .annotation-markdown { color: var(--ls-ink); }
+.translation-settings { width: min(590px, calc(100vw - 32px)); }
+.translation-connection-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 9px 0; }
+.translation-settings .field-label { margin-top: 20px; }
+.translation-shortcut { cursor: pointer; font-family: ui-monospace, monospace; }
+.shortcut-settings { width: min(430px, calc(100vw - 32px)); }
+.shortcut-settings .field-help { margin: 3px 0 13px; }
+.reader-shortcut-hint { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 12px 0; padding: 3px 6px 3px 10px; color: var(--ls-muted); background: var(--ls-surface); border-radius: 7px; }
+.reader-shortcut-hint > button { display: inline-flex; align-items: center; gap: 7px; padding: 5px; border: 0; border-radius: 5px; color: inherit; background: transparent; font: inherit; font-size: 11px; text-align: start; }
+.reader-shortcut-hint > button:hover { color: var(--ls-text); background: var(--ls-hover); }
+.reader-shortcut-hint svg { flex: none; }

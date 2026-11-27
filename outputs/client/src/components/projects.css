@@ -1,0 +1,46 @@
+.project-list { overflow-x: hidden; padding-inline-end: 2px; }
+.project-list .conversation-item { min-height: 34px; gap: 7px; margin: 0; padding: 7px 9px; text-align: start; }
+.project-list .conversation-item > span { min-width: 0; }
+.project-list .conversation-item > small { flex: none; margin-inline-start: auto; margin-inline-end: 0; }
+.project-list-group { margin-block-end: 3px; }
+.project-list-heading[data-current-project] { font-weight: 650; color: var(--ls-ink); }
+.project-chevron { color: var(--ls-muted); }
+.project-list-heading[aria-expanded="false"] .project-chevron { transform: rotate(-90deg); }
+:dir(rtl) .project-list-heading[aria-expanded="false"] .project-chevron { transform: rotate(90deg); }
+.project-list-children { margin: 2px 0 5px; margin-inline-start: 14px; padding-inline-start: 5px; border-inline-start: 1px solid var(--ls-border); }
+.project-new-chat { color: var(--ls-muted); }
+.project-chat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; position: relative; border-radius: 7px; }
+.project-chat-row.active { background: var(--ls-hover); }
+.project-chat-menu-trigger { opacity: 0; width: 27px; height: 28px; margin-inline-end: 2px; }
+.project-chat-row:is(:hover, :focus-within) .project-chat-menu-trigger, .project-chat-menu-trigger[aria-expanded="true"] { opacity: 1; }
+.project-heading-row .project-chat-menu-trigger { opacity: .75; }
+@media (hover: none) { .project-chat-menu-trigger { opacity: .8; } }
+.project-chat-actions {
+  grid-column: 1 / -1; display: grid; gap: 2px; margin: 2px 3px 4px; padding: 4px;
+  background: var(--ls-panel); border: 1px solid var(--ls-border); border-radius: 7px;
+}
+.project-chat-actions button { display: flex; align-items: center; gap: 7px; padding: 6px; border: 0; border-radius: 5px; background: transparent; text-align: start; font-size: 11px; }
+.project-chat-actions button:hover { background: var(--ls-hover); }
+.project-chat-rename { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 2px; padding: 2px; }
+.project-chat-rename input, .project-title-form input { width: 100%; min-width: 0; border: 1px solid var(--ls-border-strong); border-radius: 6px; background: var(--ls-panel); color: var(--ls-ink); font: inherit; }
+.project-chat-rename input { padding: 6px; font-size: 12px; }
+.project-chat-rename .icon-button { width: 23px; height: 25px; }
+.project-standalone { margin-block-start: 12px; }
+.project-standalone h3 { margin: 0 9px 4px; font-size: 11px; font-weight: 500; color: var(--ls-muted); }
+.project-dialog { width: min(440px, calc(100% - 24px)); }
+.project-field { display: grid; gap: 6px; margin-block: 14px; }
+.project-field input { width: 100%; }
+.project-dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.sidebar-project-label { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.home-project-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+.project-organizer { display: grid; gap: 9px; }
+.project-organizer-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--ls-muted); font-size: 12px; }
+.project-organizer-toolbar label, .project-organizer-list label { display: flex; align-items: center; gap: 8px; }
+.project-organizer input[type="checkbox"] { flex: none; margin: 0; accent-color: var(--ls-accent-strong); }
+.project-organizer-list { list-style: none; margin: 0; padding: 0; max-height: min(50vh, 460px); overflow: auto; overscroll-behavior: contain; }
+.project-organizer-list li + li { border-top: 1px solid var(--ls-border); }
+.project-organizer-list label { min-height: 36px; padding: 7px 6px; cursor: pointer; }
+.project-organizer-list label:hover { background: var(--ls-hover); }
+.project-organizer-list svg { flex: none; color: var(--ls-muted); }
+.project-organizer-list label > span { min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+.project-organizer-list small { flex: none; color: var(--ls-muted); margin-inline-start: auto; }

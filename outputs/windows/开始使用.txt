@@ -1,0 +1,239 @@
+AI4Understanding (AI4U)
+AI 嵌入式论文与电子书精读器
+
+最近阅读 / Recent reading
+首页显示最近打开的 5 份文件，点击「查看全部」可展开。「整理」支持勾选并移出多条记录，或从「已移出」恢复。原文件、批注与阅读进度都会保留。
+The start page shows the five most recently opened files. Select View all to expand the list. Use Manage to remove several entries or restore them from Removed. Files, annotations, and reading progress are preserved.
+
+电子书排版 / Ebook typography
+电子书右上角的 Aa 排版按钮可调字号、行距和正文宽度；窄栏也有 Aa，PDF 不显示此按钮。旧版排版参数按书保留，无需先解锁。
+Use Aa Typography in the ebook toolbar to adjust font size, spacing and text width. Aa stays available in narrow panes and does not appear for PDFs. Your existing per-book typography is retained.
+
+电子书缩放 / Ebook zoom
+双指捏合、Ctrl+滚轮或加减按钮整体缩放，保持当前换行，文字与图片同步放大；点击百分比恢复 100%。放大后可横向滚动，缩放和阅读位置按书保存。
+Pinch, Ctrl+wheel or +/− for layout-preserving page zoom. Text and pictures scale together; click the percentage to reset to 100%. Scroll horizontally when enlarged; zoom and position are remembered per book.
+
+快译重试 / Repeat quick translation
+误关译文后，只要原文仍可见，按原来的快捷键（默认 Alt+1）即可重译。新选段优先；要把译文存为批注，请点保留。
+After closing a translation, press the same shortcut (Alt+1 by default) while the passage is still visible. A new selection takes priority. Choose Keep to save the translation as a note.
+
+新增电子书阅读 / Ebook reading
+首页点击“打开 PDF / 电子书”，可选无 DRM 的 EPUB、MOBI、AZW3。沿用批注问答、翻译、目录、搜索和配色。按章节加载，原书只存一份；笔记和聊天继续保存在原本的本机资料中。
+Choose Open PDF / ebook on the start page for DRM-free EPUB, MOBI or AZW3. Use annotation Q&A, translation, contents, search and reading colors. Chapters load on demand and one original archive is stored. Notes and chats keep using your existing local profile.
+导入电子书后请使用 v0.1.39 或更新版本，完整备份选择默认格式；旧版不能识别新增的电子书记录。升级和保留数据的步骤见 READ-ME-FIRST-Update-and-Data-Migration.txt。
+After importing ebooks use v0.1.39 or later and the default complete backup format. Older apps cannot interpret ebook records. See READ-ME-FIRST-Update-and-Data-Migration.txt for data-preserving updates.
+
+聊天右侧的目录按钮可按提问开头跳转；“管理与删除”支持多选、全选及清空聊天，确认后删除，保留 PDF 和原文批注。批注底部可“引用到聊天继续追问”，选中引用后再输入问题发送。
+Use the chat-side index to jump by question preview. Manage and delete supports multiple/all turns or clearing chat after confirmation, preserving PDFs and source notes. Use Reference in chat and ask further below an annotation, then compose and send your follow-up.
+
+自动备份会共享相同 PDF 等附件，并校验转换旧备份；从菜单导出的完整 JSON 仍可单独恢复。不要只复制自动备份目录内的 .snapshot.json。
+Automatic backups share identical attachments and verify older backups before conversion. Complete JSON exported from the menu remains standalone; a .snapshot.json alone is not a full export.
+
+备份列表每条旁的垃圾桶可删除历史恢复点，不影响当前资料。聊天和批注照常保存，自动历史备份改为每 10 分钟检查，正常退出前也会备份。
+Use each backup’s trash icon to remove that recovery point without deleting current data. Chats and notes keep saving promptly; historical backups check for changes every 10 minutes and before normal exit.
+
+首页左上角“菜单”：设置 / API 连接 / 翻译设置 / 对话 / 备份与恢复 / 回收站。
+完整备份 JSON 不只包含聊天，也包含笔记、批注和 PDF；不含 API 连接配置与密钥。
+Start-page Menu: settings, API connections, translation settings, chats, backup and restore, and trash.
+Full backup JSON includes chats, notes, annotations and PDFs, excluding API profiles and keys.
+
+升级并删除旧版：先读这里 / Updating and removing the old app
+1. 推荐先在旧版打开“备份与恢复”，导出“全部记录（含回收站）”，把 JSON 备份放到桌面等旧程序文件夹以外的位置。
+2. 点击 × 正常退出旧版，等待保存完成，先不要删除旧文件夹。
+3. 把新版 ZIP 完整解压到一个新文件夹。不要在 ZIP 内运行，也不要只拖出 EXE。
+4. 运行新文件夹中的 AI4Understanding.exe，检查以前的文档、批注、聊天、知识库和模型连接。
+5. 原资料已经出现就直接使用，不必再导入备份。确认后再删除旧程序文件夹、旧 ZIP 和旧校验文件；保留新版和导出的 JSON。自己放在旧文件夹中的论文、备份要先移出去。
+6. 没看到旧资料时，先不删旧版，在新版“备份与恢复”→“从文件恢复”中选择刚才的 JSON。以后从新版文件夹启动，旧快捷方式需要重新创建。
+详细分步说明见同目录“READ-ME-FIRST-Update-and-Data-Migration.txt”（中英双语）或“升级与数据保留-Update-and-data.md”。同机同账户更新会自动沿用资料，新版首次打开还会先建立升级检查点。不要删除 %APPDATA%\MarginChat 来清理旧程序。
+Recommended order: export an extra complete backup outside the old program folder, exit the old app, fully extract the new ZIP elsewhere, run it and check PDFs/notes/chats/connections, then remove the old folder and ZIP. If the old data appears, do not import it again. If it is missing, keep the old app and choose Backup & restore → Restore from file. Keep your exported JSON and the entire new folder; recreate shortcuts to the new EXE.
+See “READ-ME-FIRST-Update-and-Data-Migration.txt” (Chinese and English) or “升级与数据保留-Update-and-data.md”. Same-account updates reuse local data automatically and create an upgrade checkpoint. Do not delete %APPDATA%\MarginChat while cleaning old program versions.
+
+一、运行 / Run
+完整解压 ZIP，运行 AI4Understanding.exe，保留所有同目录文件。
+Fully extract the ZIP and run AI4Understanding.exe. Keep all accompanying files.
+无需单独安装 Node.js。更新前正常退出旧版，不要同时运行两版。
+No separate Node.js installation is needed. Exit the old version normally before updating; do not run both together.
+
+二、阅读与语言 / Reading and language
+首页选择本地 PDF，或继续最近阅读。相同内容只显示一次，同名不同内容分别保留。
+Open a local PDF or continue a recent document. Identical content appears once; different content with the same filename remains separate.
+左侧打开文件及文档导航；右侧阅读设置、聊天及关闭。文档导航包含目录、全文搜索和批注列表。
+The toolbar provides file opening and navigation on the left, and reading settings, chat and close on the right. Navigation includes PDF contents, search and annotations.
+在首页、阅读设置或聊天设置中选择界面语言，八种语言均可在本机记住。
+Choose from eight interface languages on the home screen or in reading/chat settings. The choice is remembered locally.
+切换只改变操作界面，不改写论文、聊天、笔记、已保存连接名称或回答偏好。
+Switching changes only the interface, without rewriting papers, conversations, notes, saved connection names or answer preferences.
+
+三、批注和高亮颜色 / Annotations and highlight colors
+划选文字，选择询问 AI 或只写批注。点击高亮打开，× 或 Esc 收起，点击聊天或正文保持打开，拖动标题栏可移动。
+Select text to ask AI or write a note. Click a highlight to open it, close with × or Esc, keeping it open when clicking chat or source text, and drag the title bar to move it.
+批注框的“高亮颜色”提供八种预设、自定义颜色选择器和 #RRGGBB / #RRGGBBAA 输入。颜色随批注保存、备份和恢复。
+Highlight color offers eight presets, a custom color picker and #RRGGBB / #RRGGBBAA input. Colors survive annotation save, backup and restore.
+每处高亮保留一组当前问答。可编辑或重新提问，新回答成功后才覆盖旧结果；失败或停止仍保留旧结果。
+Each highlight has one current Q&A. Edit it or ask again. Only a successful new answer replaces the old result; failure or stopping keeps it.
+重新生成主回答创建独立版本，旧批注留在原回答上。批注内不创建嵌套批注。
+Regeneration creates a separate answer version; old annotations stay on the original. Annotations have no nested annotations.
+
+四、阅读配色 / Reading colors
+阅读设置可选择原色、暖黄、浅灰、深色或自定义纸张/文字色。可保留彩图及临时对照原色。
+Reading settings offer original, warm yellow, light gray, dark or custom paper/text colors. Preserve colored areas or temporarily compare original colors.
+放大或滚动后，可视区域会自动补上高清绘制。整页底图继续控制内存占用，屏幕外不保留高清缓存；文字选择、引用跳转及批注位置使用原来的文字层。
+After zooming or scrolling, visible areas automatically receive a high-resolution redraw. The bounded whole-page bitmap remains available, while offscreen detail caches are released. Selection, reference navigation and annotation positions continue to use the original text layer.
+深色纸张会将 PDF 自带链接的文字及边缘统一调整为柔和浅蓝色，减少引用数字的白色重影。图片链接不会整体换色，原色对照可恢复原来的颜色。
+On dark paper, embedded PDF link text and its edges share a soft light blue to prevent pale citation halos. Image links are not recolored as a whole, and original-color comparison restores the source colors.
+工具栏、阅读区边缘、设置与批注框随纸张色变化，拖动先快速预览，停下后恢复清晰。换色只改变显示，不改写 PDF。支持连续/单页、双指捏合或 Ctrl + 滚轮缩放及续读。
+The toolbar, reader margins, settings and annotations follow the paper color. Dragging uses a fast preview and restores full clarity when settled. Recoloring changes the display only. The reader supports continuous/single pages, trackpad pinch or Ctrl + wheel zoom, and reading position memory.
+扫描页可查看及换色，暂不支持 OCR 或图像理解。目录依赖文件内嵌结构，搜索使用提取文字。
+Scanned pages support viewing and recoloring, without OCR or image understanding. Contents depend on embedded outlines; search uses extracted text.
+
+五、模型与网络 / Models and networking
+首页直接显示 API 连接。打开配置，填写地址和密钥后点击“探测模型”，筛选选择模型再保存；不支持列表的服务仍可手动填写。可用中转站、GPT、Claude、DeepSeek 或“其他”服务模板。
+The home screen shows API setup. Enter the address and key, fetch available models, filter/select a model and save. Manual entry remains available when listing is unsupported. Choose relay, GPT, Claude, DeepSeek or Other service templates.
+其他服务包含 Kimi、千问、Gemini 兼容入口、Grok、Ollama、LM Studio 和自定义 API。
+Other services include Kimi, Qwen, Gemini's compatible endpoint, Grok, Ollama, LM Studio and custom APIs.
+接口格式是通信协议：Chat Completions、Responses、Anthropic Messages。模型名称和可用性由服务商决定。
+API formats are protocols: Chat Completions, Responses and Anthropic Messages. Model names and availability depend on the provider.
+保存或切换连接不发送问题。普通阅读、搜索和笔记不调用 AI。
+Saving/switching connections sends no questions. Reading, searching and personal notes make no AI requests.
+聊天发送尚未删除的有效主对话及所选文档资料，默认不读取批注；点击输入框下方工具栏“引用批注”后，只把手动选择的问答或笔记加入该次问题。PDF 批注只引用所属文档、选段和本次问题，不带聊天及其他批注；在 AI 回答上提问时，仅引用批注绑定的那一版原回答。
+文档范围继续支持自动、全文或按需引用：自动模式下，小文件发送全文提取文字，超过 25 MiB、300 页或 12 万提取字符时在本机检索，每份文档最多引用 2.4 万片段字符，选段和问题另计。原 PDF 和页面图片不作为文件上传。资料不足时明确提示，全文仍受请求和模型容量限制。批注失败重试保留本次问题、回答偏好和文档范围，从同一份不可变来源重新组装请求，不保存整段聊天快照。
+Chat sends the remaining valid main conversation and document material, without automatically reading annotations. Reference annotations in the composer toolbar adds only the Q&A or notes you select to that question. A PDF annotation uses only its own document, selection and current question, without chat or other annotations. An annotation on an AI answer uses only its bound original answer version.
+Document scope still supports Auto, Full text and Relevant excerpts. Auto sends full extracted text for small files; above 25 MiB, 300 pages or 120,000 extracted characters, local retrieval sends at most 24,000 excerpt characters per document, with the selection and question additional. Original PDFs and page images are not uploaded as files. Missing evidence is disclosed, and full text remains subject to request/model limits. Failed annotation retries retain the question, answer preference and document scope and rebuild from the same immutable source, without storing a full-chat snapshot.
+桌面版沿用系统代理，不含代理节点或密钥。使用代理时保持代理工具运行并开启系统代理；API 地址仍填服务商地址。
+The desktop app follows the system proxy and includes no proxy nodes or keys. Keep your proxy app and system proxy enabled when needed, and keep the provider's address in the API field.
+
+六、数据、备份和退出 / Data, backups and exit
+更名继续使用原数据位置 %APPDATA%\MarginChat，不需要迁移或重填已保存连接。
+Renaming keeps the original data location, %APPDATA%\MarginChat. No data migration or re-entry of saved connections is needed for this rename.
+“备份与恢复”支持完整导出、当前对话导出、兼容旧版导出、自动备份及恢复为新对话。
+Backup & restore supports full/current-conversation export, legacy export, automatic backups and restoration as new conversations.
+备份包含附件原文件和批注，不含 API 配置或密钥。界面语言、阅读配色和位置是单独的本机偏好，不进入聊天备份。
+Backups contain original attachments and annotations, but no API settings/keys. Language, reading colors and position are separate local preferences outside conversation backups.
+回收站可恢复、永久删除或清空；以前的自动或导出备份可能仍包含旧内容。
+Trash supports restore, permanent deletion and emptying. Earlier automatic/exported backups may still contain old content.
+正常关闭等待保存和备份完成。保存失败可重试或取消退出，强制结束可能丢失最近修改。
+Normal exit waits for saving and backup. Retry or cancel exit if saving fails; forced termination may lose recent edits.
+启动无反应可运行“启动诊断.cmd”。反馈前去除个人路径、内容和密钥，不要发送整个数据目录或模型配置。
+If startup fails, run 启动诊断.cmd. Remove personal paths/content/keys before reporting; do not share your whole data directory or model settings.
+
+七、开源、实现与复用 / Open source, credits and reuse
+https://github.com/Eatastar/AI-Embedded-Paper-PDF-Reader
+原创应用代码全部由 GPT 通过 Codex 实现；人类发起者提出想法、确定需求并选择功能与取舍。
+All original application code was implemented by GPT through Codex. The human initiator proposed ideas, defined requirements and chose features/trade-offs.
+任何人都可以下载，并用 AI agent / vibe coding 改成适合自己的版本。发布衍生版时，请在 README 或发布说明链接上游仓库。
+Anyone may download and adapt this project with AI agents / vibe coding. Please link upstream in the README or release notes when publishing a derivative.
+需要通知维护者可在相关 Issue、PR 或 Discussion 中 @Eatastar；项目来源使用仓库链接标注。
+To notify the maintainer, mention @Eatastar in a relevant issue, pull request or discussion. Credit the project with a repository link.
+项目自身代码采用 MIT。来源链接是友好请求，不增加许可证限制。第三方组件保留各自作者署名和许可，发行目录内附许可文件。
+Original code uses MIT. Linking upstream is a courtesy request, not an extra license restriction. Third-party components keep their own authorship and licenses, included in the distribution.
+
+大文件 / Large files
+PDF 最大 150 MiB、5000 页、1000 万提取字符；文字文件最大 25 MiB、100 万字符。打开时可查看提取进度并取消。全工作区备份仍以 350 MB 为限，超出时分别导出对话。
+PDF: up to 150 MiB, 5,000 pages and 10 million extracted characters. Text files: up to 25 MiB and 1 million characters. Opening shows progress and supports cancellation. Full-workspace backups retain a 350 MB limit; export conversations separately when needed.
+
+
+模型探照说明 / Model discovery details
+
+首页“探测上游模型”直接进入列表获取，已保存可用连接会自动读取。使用服务商的 GET 模型列表 API，不是管理后台网页。兼容以 /responses、/chat/completions、/messages 或 /models 结尾的完整地址；推导列表路径时保留主机与前缀，不改保存的连接或密钥。界面显示请求路径及 HTTP 失败状态，仍可手动填模型名。
+
+Discover models on the home screen opens discovery and fetches immediately for a usable saved connection. It uses the provider's GET model-list API, rather than a management webpage. Full /responses, /chat/completions, /messages and /models addresses are accepted; the provider prefix/origin and saved connection/key are preserved. The UI shows the request path and HTTP failure status, with manual model entry available.
+
+
+模型选择 / Model selection
+连接名称只作本地备注；在上游模型下拉框中选择实际调用模型，保存并使用后生效。模型按名称及自然数字顺序排列，手动输入按需展开，保留未列出的自定义模型。
+
+Connection names are local labels. Choose the actual API model in the upstream list and Save and use. Models sort by name with natural numbers; manual entry expands on demand and preserves unlisted custom models.
+
+划词翻译与 PDF 链接 / Translation and PDF links
+
+选中文字后右键翻译或按默认 Alt+1；右上角独立“翻译”按钮可设置目标语言、提示词、独立 API 及自定义快捷键。连接列表共用，翻译选择不切换聊天。只发送选段和翻译提示词，不发送全文、所在页或聊天历史。临时面板显示译文和模型，框外点击、Esc 或 × 关闭并丢弃；点击保留后才创建普通批注。翻译设置单独记在本机，不进入聊天备份。
+
+Select text and right-click to translate or press Alt+1. The separate Translate button configures the target language, prompt, independent API and shortcut. Connections are shared without switching chat. Only the selection and translation prompt are sent, without full text, page or history. Outside click, Esc or × discards temporary text/model results; Keep creates a plain note. Settings stay local outside conversation backups.
+
+PDF 自带的参考文献和图号链接支持文内精确跳转，并可返回跳转前位置。HTTP/HTTPS 网页链接交由系统浏览器打开，不执行脚本或文件动作；没有原生链接的文字不猜测跳转。深色配色修正彩色字边缘的白色残影，原 PDF 不改写。
+
+Embedded PDF references/figure links navigate to their page positions, with return navigation. HTTP/HTTPS links open in the system browser; scripts and file actions are not executed. No destination is guessed for unlinked text. Dark colors correct white halos around colored text without modifying the PDF.
+
+翻译滚动保留 / Translation while scrolling
+滚动时保留翻译框，连续阅读暂留当前翻译的来源页，滚远后仍可保留为原位置的批注。普通框外点击、Esc 或 × 关闭，拖动滚动条不会关闭。
+
+The translation panel remains open while scrolling, retaining its source page in continuous reading so it can still be saved as a note at the original passage. Ordinary outside click, Esc or × closes it; dragging the scrollbar does not.
+
+八、聊天引用与删除 / Chat references and deletion
+输入框下方工具栏“引用批注”可以选择当前记录中已保存的问答或笔记，发送后可展开查看当时的副本。
+Reference annotations in the composer toolbar selects saved Q&A or notes in the current record; expand the sent question to inspect its copy.
+每轮回答下方的“删除本轮”会直接删除本轮问题、全部回答版本及这些回答上的批注，不进入回收站；PDF 原文批注和文件保留。同时清除剩余失败回答的旧请求快照，后续聊天中对被删回答批注的手动引用也会移除，重试不会通过这些缓存带回已删内容。以前的自动备份、迁移存档和导出文件可能仍含旧内容。
+Delete round under each answer permanently removes that question, all answer versions and annotations attached to those answers, without Trash. PDF annotations and files remain. Remaining failed-answer snapshots and later manual references to the removed answer annotations are also cleared, so retries cannot restore deleted content through these caches. Earlier automatic backups, migration archives and exports may still contain old content.
+0.1.20 可读取旧备份；含新增引用和重试设置的备份，请使用 0.1.20 或更新版本恢复。
+Version 0.1.20 reads older backups; restore backups with new references/retry settings using v0.1.20 or newer.
+
+九、重开 PDF 与引用文字 / Reopen PDF and quote text
+聊天模式关闭 PDF 后保持聊天可见，顶部“展开 PDF”及聊天文件名可一键恢复并排阅读，沿用原页码与缩放。左上角长项目名按侧栏宽度换行。选中 PDF、AI 回答或聊天问题中的文字，可通过浮动按钮或右键“引用到聊天”，在输入框预览选段、补充问题再发送，不创建批注或自动调用 API。每次引用一段，重新选择会替换待发送段落，可用 × 取消。
+Closing a PDF in chat keeps the conversation visible. Open PDF at the top, or the file name in chat, restores side-by-side reading with the saved page and zoom. Long branding wraps inside the sidebar. Select text in a PDF, AI answer or chat question and use Quote in chat from the selection action or context menu, preview the excerpt, add a question and send. This creates no annotation and makes no automatic API call. One pending excerpt can be replaced or removed with ×.
+批注在点击聊天、正文、翻页和切换阅读布局时保持打开，用 × 或 Esc 收起；编辑中的修改在关闭或切换来源时保存。切换文件或对话会收起批注。临时翻译继续保持原来的框外点击、Esc / × 关闭及滚动保留规则；同时展开时，Esc 优先关闭翻译。
+Annotations stay open while clicking chat/source text, turning pages or changing reading layout; use × or Esc to close. Pending edits are saved when closing or leaving the source. Switching documents or conversations dismisses the annotation. Temporary translation retains outside-click, Esc/× dismissal and scroll retention; when both panels are open, Esc dismisses translation first.
+文字引用与本轮问题一起保存和备份，聊天仍按原设置带入有效聊天与文档资料。它与“只发送选段”的翻译功能不同；批注提问仍不引用聊天或其他批注。删除被引用的聊天轮次时，后续问题中的相关文字引用副本与旧重试缓存也会清除，PDF 引用和原文批注保留。新版本可读取旧备份，含文字引用的备份请使用 v0.1.22 或更新版本恢复。
+Text quotations are saved and backed up with the question. Chat still uses valid history and document material according to existing scope settings, unlike selection-only translation. Annotation questions still exclude chat and other annotations. Deleting a quoted chat round clears its later quotation copies and stale retry snapshots while retaining PDF quotations and annotations. Older backups remain readable; restore backups with text quotations using v0.1.22 or newer.
+
+
+聊天与阅读切换 / Switching between chat and reading
+聊天关闭 PDF 后，顶部“展开 PDF”恢复并排阅读，“阅读模式”直接返回专注阅读。两者均恢复原页码和缩放。文件栏右侧显示“展开 / 收起”和矢量箭头。
+After closing a PDF in chat, Open PDF restores side-by-side reading, while Reading mode returns to focused reading; both retain page and zoom. The file bar displays Expand / Collapse beside a vector chevron.
+
+公式显示 / Math rendering
+本版统一公式渲染器与本地样式版本，修复聊天、批注和翻译中不等号等否定符号的斜线错位。旧回答重新显示即可，无需重新生成。
+This version aligns the math renderer with its local stylesheet, fixing negated relations in chat, annotations and translations. Existing answers display correctly without regeneration.
+
+
+鼠标反馈 / Mouse feedback
+空白与界面标题显示箭头，正文及文字输入框显示 I 形，可点击的按钮、菜单、颜色选择器和链接显示手形，禁用操作显示禁止光标。批注和翻译标题栏可拖动，按住移动时显示抓取状态，松开后恢复。
+Whitespace and interface headings use an arrow; text and text fields use an I-beam. Clickable controls and links use a hand, and disabled actions show the unavailable cursor. Drag annotation and translation panels by their title bars; the grabbing cursor remains active until release.
+
+
+聊天阅读位置 / Chat reading position
+聊天按对话分别记住上次阅读的位置。正常退出后重新打开聊天，会回到上次的段落；上次在底部则回到最新回答。窗口宽度变化、聊天与 PDF 并排/专注阅读切换时，优先按回答和段落定位，避免只按像素恢复导致偏移。首次打开没有位置记录的历史对话时，显示最新内容。
+
+Chat remembers the reading position separately for each conversation. After a normal exit, reopening chat returns to the last paragraph, or to the latest answer if it was at the bottom. Reply and paragraph anchors preserve the reading location across window resizing and PDF/chat layout changes. Existing conversations without a saved position initially show their latest content.
+
+主动发送新问题时继续显示新回答；生成中手动向上阅读会暂停跟随，仍可通过“回到对话底部”查看最新内容。退出、切换对话和暂时收起聊天时都会保留位置；字体、公式或页面晚到的排版更新不会立即覆盖保存的位置。原定位的回答被删除或切换版本时，回退到附近仍存在的消息。
+
+Sending a new question still follows the new answer. Manually scrolling upward during generation pauses following; the bottom button remains available. Positions survive exiting, switching conversations and hiding chat. Delayed font, formula or content layout does not overwrite the saved location. Deleted or replaced source answers fall back to a nearby surviving message.
+
+聊天阅读位置只在本机保存对话/回答标识及显示位置，不复制聊天正文、PDF 文字或密钥，不进入聊天备份，也不发送给 AI。回收站中的对话可继续保留位置以供恢复，永久删除对话时清理其位置记录。
+
+Chat reading preferences store only local conversation/reply identifiers and display positions. They contain no message text, PDF text or credentials, are excluded from conversation backups and are never sent to AI. Recycled conversations retain their preferences for recovery; permanent conversation removal clears the saved position.
+
+图片批注问答 / Image Q&A
+在 PDF 工具栏点击“框选图片”，选中整幅图及坐标、图例或图注，在紧凑批注中点击“圈出疑问”。默认画圈，也可选择画笔、颜色和粗细，支持撤销与清空。保留圈画后输入问题，选择已保存的视觉模型连接即可提问。点击缩略图可临时放大，默认侧栏宽度约 280–320px；窄窗口移到页面下方。批注可拖动，用 × 或 Esc 收起，再点原图选区重新打开。
+Choose Select image in the PDF toolbar, include the figure with its axes, legend or caption, then choose Circle a detail in the compact annotation. Circle is the default; pen, colors, widths, undo and clear are available. Keep the markings, enter a question and select a saved image-capable connection. Click the thumbnail to enlarge it. The default panel is about 280–320px wide and moves below the page in narrow windows. Drag the panel or close it with × or Esc; click its source region to reopen it.
+只有主动发送图片问题时，才向所选连接发送本次原始配色选图、圈画、问题及所属文档的文字资料；小文件默认全文，大文件按需引用，不带聊天及其他批注。重新提问成功后才替换原问答和圈画。明确只支持文字的连接可在设置中标记并提前阻止请求；未知能力依据上游明确错误提示，不会自动发送测试图片或产生探测调用。
+Only sending an image question transmits its original-color crop, markings, question and source-document text to the selected connection. Small files use full text and large files use relevant excerpts by default, without chat or other annotations. A successful re-question replaces the old Q&A and markings; failures keep them. Mark known text-only connections in settings to block image requests. Unknown capabilities are classified from explicit upstream errors, without automatic probe images or billable test calls.
+保存和备份只新增文档关联、页码、相对选区及矢量笔迹，不为每条图片批注持久保存截图或 Base64。重新打开时从已保存 PDF 还原选图；原 PDF 仍按原附件机制保留。派生原色选图采用最多 32 MiB / 24 项的临时缓存，发送图片最多 1 MiB、最长边 1800px、200 万像素；活动预览、合成画布与 PDF 页面内存另计，收起或关闭后释放相应资源。图片批注备份请用 v0.1.26 或更新版本恢复。
+Storage and backups add only the document association, page, normalized region and vector markings, without a persisted screenshot or Base64 copy for each annotation. Images are regenerated from the saved PDF; the original PDF remains an attachment. Derived original-color crops use a transient cache capped at 32 MiB / 24 entries. A transmitted image is capped at 1 MiB, 1800px per edge and two million pixels. Active previews, compositing canvases and PDF page memory are separate and released when no longer needed. Restore image-annotation backups with v0.1.26 or newer.
+
+快捷键与聊天设置 / Shortcuts and chat settings
+新增 Ctrl+Alt+A 图片框选快捷键，在 PDF 原排版中按下即可开始框选，再按一次或按 Esc 取消；输入文字、使用输入法和设置弹窗期间不会触发。聊天模式左下角提供独立“设置”入口，可切换八种界面语言，查看快捷键并进入共享模型/API 连接管理；语言选择在本机记住。
+Ctrl+Alt+A starts image selection in the original PDF view; press again or Esc to cancel. It does not trigger while editing text, composing input or using settings dialogs. A dedicated Settings entry at the bottom left of chat provides eight interface languages, a shortcut reminder and shared model/API connection management. The interface language is remembered locally.
+
+语言与浮窗 / Languages and popups
+语言选择框改为单层轻边框，去掉原来的棕色焦点框。界面新增西班牙语、日语、繁体中文、德语、阿拉伯语和法语，含简体中文及英语共八种语言；主要操作界面本地化，部分帮助和技术诊断回退英文。阿拉伯语界面从右向左排列，PDF、图表、公式、代码及原始内容保留各自方向。语言选择仅保存在本机，不会翻译或改写论文、聊天与批注正文。
+The language picker uses one subtle border, replacing the brown focus frame. Spanish, Japanese, Traditional Chinese, German, Arabic and French join Simplified Chinese and English. Core controls are localized; some help and technical diagnostics fall back to English. Arabic uses a right-to-left interface while PDFs, figures, formulas, code and source content retain their own direction. Language preferences stay local and do not translate or rewrite papers, conversations or annotation content.
+文字批注、图片问答和翻译浮窗可通过四边、四角拖拽调整大小，内容溢出时在框内滚动；保留标题栏拖动。双击缩放边角恢复默认大小，聚焦缩放手柄后可用方向键微调（Shift 加快）。窗口变小时约束尺寸，保持关闭按钮可见。尺寸只保留在当前打开的浮窗，不增加图片缓存或请求。
+Text annotations, image Q&A and translation popups can be resized from every edge and corner, with internal scrolling and existing title-bar dragging. Double-click a handle to reset; focus it and use arrow keys for adjustments, with Shift for larger steps. Viewport limits keep the close control reachable. Sizes remain only in the open popup and create no image cache or model request.
+
+
+图片批注停靠 / Image annotation docking
+修复图片批注拖走后，PDF 底部或侧边仍留下一大块空白的问题。拖动标题栏或缩放边角时自动改为浮窗，立即释放原停靠占位；PDF 恢复完整阅读区域。标题栏新增图钉按钮，可手动停靠或取消停靠。同一文档的本次阅读中，关闭再打开图片批注会继续使用浮窗模式；重新停靠会恢复默认尺寸和停靠位置。问答、圈画与编辑草稿保持原样。
+Fixes the blank area left below or beside the PDF after moving an image annotation away. Dragging its title bar or resizing switches it to a floating popup and releases the reserved dock space, restoring the full reading area. A pin button also docks or undocks it explicitly. Reopening image annotations in the same document session retains floating mode; docking restores default size and placement. Q&A, markings and editing drafts are preserved.
+
+AI 与翻译语言联动 / AI and translation languages
+聊天、文字批注和图片批注的默认 AI 回答语言跟随界面语言，八种语言均生效。默认翻译目标和默认翻译提示词也跟随界面；在翻译设置中选择“自定义目标语言”可固定译文语言。自己写的回答偏好和翻译提示词原样保留；回答偏好或本次问题中明确指定的语言优先。旧版内置的固定中文默认提示词自动按当前界面处理，不批量改写保存的连接。切换仅影响新请求；已发出的请求、失败重试、旧回答和已有译文保持原样。语言切换本身不会发起模型调用，也不会翻译或改写文档及批注正文。
+Default AI answer languages for chat, text annotations and image Q&A follow all eight interface languages. The default translation target and built-in translation prompt follow the interface too; choose Custom target language to keep a fixed target. Custom response preferences and translation prompts remain verbatim, with explicit language requests in response preferences or the current question taking priority. Exact legacy built-in Chinese defaults are resolved for the current interface without bulk-editing saved connections. Changes apply to fresh requests; sent requests, failed retries, existing answers and existing translations remain unchanged. Changing language makes no model request and does not translate or rewrite documents or annotation content.
+
+批注操作布局 / Annotation action layout
+修复批注“重新提问”时发送按钮紧贴输入框、遮挡焦点外圈的问题，输入区与操作区保留明确间距。文字批注和图片问答的发送、编辑、重问及重试操作栏按可用宽度换行，图标保持清晰，长错误信息自动换行；拖动改变批注大小或拉高输入框后，按钮仍在输入区下方。修复窄窗口下日语、德语等界面中模型/翻译设置的底部按钮和语言选择框溢出。
+Fixes the Send and replace button touching the re-ask input and covering its focus ring, with a clear gap between the input and its actions. Send, edit, re-ask and retry actions in text and image annotations wrap to fit the available width while icons retain their size and long error messages wrap inside the panel. Actions stay below the input after resizing a popup or increasing the input height. Also fixes narrow-dialog overflow in model and translation footers and the language picker, including Japanese and German interfaces.
+
+提问圈画的显示范围 / Question marking scope
+圈画只显示在图片问答预览与圈画编辑器中，并叠加到主动发送给 AI 的选图；PDF 原页不再显示提问用的圈线或画笔。已有圈画、问答与重新提问草稿继续保留，原页的选区入口仍可用于重新打开图片批注，无需重新导入 PDF。
+Question markings appear only in the image Q&A preview and drawing editor, and are included in the selected image explicitly sent to AI. The PDF source page no longer displays these circles or pen strokes. Existing markings, answers and replacement drafts remain intact; the source-region locator still reopens image annotations, without reimporting the PDF.

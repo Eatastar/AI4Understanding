@@ -1,0 +1,83 @@
+import { english } from './messages';
+import { additional } from './additional';
+import { traditional } from './traditional';
+import { ebookMessages, ebookDiagnostics } from './ebooks';
+import { projectFeatureMessages, projectFeatureDiagnostics } from './project-features';
+import { knowledgeMessages } from './knowledge-messages';
+import { inquiryMessages } from './inquiry-messages';
+import { modelMessages } from './model-messages';
+import { wikiMessages } from './wiki-messages';
+import { readerEngineMessages } from './reader-engine-messages';
+import { experimentMessages } from './experiment-messages';
+
+export const LANGUAGES = [
+  { code: 'zh-CN', name: '简体中文' }, { code: 'en', name: 'English' },
+  { code: 'es', name: 'Español' }, { code: 'ja', name: '日本語' },
+  { code: 'zh-TW', name: '繁體中文' }, { code: 'de', name: 'Deutsch' },
+  { code: 'ar', name: 'العربية' }, { code: 'fr', name: 'Français' },
+] as const;
+export type Locale = typeof LANGUAGES[number]['code'];
+export const localeDirection = (locale: Locale) => locale === 'ar' ? 'rtl' : 'ltr';
+export const LOCALE_STORAGE_KEY = 'ai-paper-pdf-reader.ui-locale.v1';
+type PreferenceStorage = Pick<Storage, 'getItem' | 'setItem'>;
+export function isLocale(value: unknown): value is Locale { return LANGUAGES.some(item => item.code === value); }
+export const catalogs: Partial<Record<Locale, Record<string, string>>> = { en: english, 'zh-TW': traditional, ...additional };
+Object.assign(english, ebookDiagnostics, projectFeatureDiagnostics);
+for (const row of [...ebookMessages, ...projectFeatureMessages, ...knowledgeMessages, ...modelMessages]) LANGUAGES.slice(1).forEach((language, index) => { catalogs[language.code]![row[0]] = row[index + 1]; });
+for (const [key, en, tw] of inquiryMessages) { english[key] = en; traditional[key] = tw; }
+for (const [key, en, tw] of [...wikiMessages, ...experimentMessages,...readerEngineMessages]) { english[key] ??= en; traditional[key] ??= tw; }
+
+/** This preference is separate from conversations, credentials and backup data. */
+export function createLocaleStore(storage?: PreferenceStorage) {
+  let locale: Locale = 'zh-CN';
+  try { const saved = storage?.getItem(LOCALE_STORAGE_KEY); if (isLocale(saved)) locale = saved; } catch { /* Restricted storage: use the session. */ }
+  const listeners = new Set<() => void>();
+  return {
+    get: () => locale,
+    subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
+    set(value: Locale) {
+      if (!isLocale(value)) throw new Error('Unsupported interface language');
+      let saved = false;
+      try { if (storage) { storage.setItem(LOCALE_STORAGE_KEY, value); saved = true; } } catch { /* Keep the working session usable. */ }
+      locale = value;
+      listeners.forEach(listener => listener());
+      return saved;
+    },
+  };
+}
+function browserStorage() { try { return typeof window === 'undefined' ? undefined : window.localStorage; } catch { return undefined; } }
+export const localeStore = createLocaleStore(browserStorage());
+export const getLocale = localeStore.get;
+export const setLocale = localeStore.set;
+function interpolate(message: string, values: readonly unknown[]) {
+  return message.replace(/\{(\d+)\}/g, (token, index: string) => Number(index) < values.length ? String(values[Number(index)]) : token);
+}
+// Dynamic diagnostics keep filenames, provider messages and identifiers intact.
+const patterns = Object.entries(english).filter(([key]) => /\{\d+\}/.test(key)).map(([key, translation]) => {
+  const indexes: number[] = [];
+  const parts = key.split(/(\{\d+\})/g).map(part => {
+    if (/^\{\d+\}$/.test(part)) { indexes.push(Number(part.slice(1, -1))); return '([\\s\\S]*?)'; }
+    return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  });
+  return { key, translation, indexes, regexp: new RegExp('^' + parts.join('') + '$') };
+}).sort((a, b) => b.key.length - a.key.length);
+export function translate(source: string, locale: Locale, values: readonly unknown[] = []): string {
+  if (locale === 'zh-CN') return interpolate(source, values);
+  const catalog = catalogs[locale] || english;
+  if (Object.prototype.hasOwnProperty.call(catalog, source)) return interpolate(catalog[source], values);
+  if (Object.prototype.hasOwnProperty.call(english, source)) return interpolate(english[source], values);
+  if (!values.length) for (const pattern of patterns) {
+    const match = pattern.regexp.exec(source);
+    if (!match) continue;
+    const captured: string[] = [];
+    pattern.indexes.forEach((index, position) => {
+      const raw = match[position + 1];
+      // Only these application-owned wrappers contain another diagnostic.
+      // Other interpolations can be filenames or quoted user text.
+      captured[index] = index === 0 && (pattern.key === '{0}\n诊断编号：{1}' || pattern.key === '备份格式无效：{0}') ? translate(raw, locale) : raw;
+    });
+    return interpolate(catalog[pattern.key] || pattern.translation, captured);
+  }
+  return interpolate(source, values);
+}
+export function t(source: string, values: readonly unknown[] = []): string { return translate(source, getLocale(), values); }
