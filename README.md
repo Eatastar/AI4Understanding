@@ -1,10 +1,10 @@
 # AI4Understanding (AI4U)
 
-**AI 嵌入式论文 PDF 阅读器**
+**AI 辅助个人阅读与知识整理**
 
-原 AI-Embedded Paper PDF Reader。更名后的版本会继续使用原来的本机资料。
+AI4Understanding 是一款基于「AI 嵌入式论文 PDF 阅读器」（AI-Embedded Paper PDF Reader）的新产品，目前仍在开发中。读者可以围绕论文或书中的一段原文向 AI 提问，核对回答引用的段落，再把自己的理解整理进个人知识库。我们的目标是打造一套 AI 辅助个人阅读与知识整理体系，在易用性、来源可追溯性和长期使用的稳定性上媲美成熟的商用软件。
 
-Formerly AI-Embedded Paper PDF Reader. The renamed app continues to use your existing local profile.
+AI4Understanding is a new product built on AI-Embedded Paper PDF Reader and is still in development. Readers can ask AI about a passage in a paper or book, check the sources cited in the answer, and write up what they learned in their personal knowledge base. We aim to build a system for AI-assisted personal reading and knowledge management that matches mature commercial tools in ease of use, source traceability, and long-term reliability.
 
 本仓库的协作起点是阅读器 `0.1.46-preview.59`。从论文划选到模型请求的入口在 [reader-context.ts](outputs/client/src/domain/reader-context.ts)，问题分类和材料检索在 [reader-evidence.ts](outputs/client/src/domain/reader-evidence.ts)，证明步骤定位在 [reader-proof-steps.ts](outputs/client/src/domain/reader-proof-steps.ts)。
 
@@ -24,7 +24,7 @@ A desktop reader for local PDFs and DRM-free EPUB, MOBI and AZW3 ebooks. Work th
 
 [旧仓库发布记录 / Earlier releases](https://github.com/Eatastar/AI-Embedded-Paper-PDF-Reader/releases) · [版本说明 / Release notes](docs/RELEASE_NOTES.md) · [隐私 / Privacy](docs/PRIVACY.md) · [版本记录 / Changelog](docs/CHANGELOG.md) · [项目总纲 / Project outline](docs/PROJECT.md)
 
-## 下载 v0.1.45 / Download v0.1.45
+## 原阅读器 v0.1.45 下载 / Original reader downloads (v0.1.45)
 
 | Windows | Linux（预览 / Preview） | macOS（便携试用 / Portable preview） |
 | --- | --- | --- |
@@ -44,9 +44,9 @@ A desktop reader for local PDFs and DRM-free EPUB, MOBI and AZW3 ebooks. Work th
 
   Open **Apple menu → About This Mac** to check your chip. Choose `arm64` for Apple silicon or `x64` for Intel. Extract the full ZIP, keep its files together, and open `Start Reader.command`.
 
-支持八种界面语言，可在程序内切换并在本机记忆。程序与个人资料分开保存。[更新与数据保留](docs/UPDATING.md)
+支持八种界面语言，可在程序内切换并在本机记忆。程序与个人资料分开保存，从原阅读器升级可继续使用已有的本机资料。[更新与数据保留](docs/UPDATING.md)
 
-Choose from eight interface languages. The app remembers your choice locally. Program files are separate from your profile. [Updates and your data](docs/UPDATING.md)
+Choose from eight interface languages. The app remembers your choice locally. Program files are separate from your profile, so you can keep using your local data when upgrading from the original reader. [Updates and your data](docs/UPDATING.md)
 
 首页左上角“菜单”可直接进入设置、API 连接、翻译设置、聊天、备份恢复和回收站，无需先打开 PDF。完整 JSON 备份包含聊天、笔记、批注和已导入的 PDF / 电子书原文件，不含 API 连接配置与密钥。
 
