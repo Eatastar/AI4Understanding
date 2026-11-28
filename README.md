@@ -6,9 +6,13 @@ AI4Understanding 是基于「AI 嵌入式论文 PDF 阅读器」开发的开源�
 
 AI4Understanding is an open-source project built on AI-Embedded Paper PDF Reader. Our goal is a tool for close reading and personal knowledge management that meets commercial standards.
 
-如今ai的发展让我们的文献阅读越来越便捷，但是有时候，我们总还是想要慢下来，为了我们的好奇心和求知欲，为了我们的品味与审美，来认真阅读、学习一些东西。我想个人对知识的理解是我们作为人类而言最宝贵的体验与财富，我们总是会被自然本质的魅力所吸引，而不住地想去理解它，这款产品就是以此为目标诞生的。但目前市面上似乎没有好用的，能够加速个人的学习与理解的产品。开发者自己轻度试用了目前市面上类似的产品，包括llm-for-zetore, atlaswork等，也粗略了解了阿里达摩院，heptabase等产品，发现它们在整理文献、知识的方面有着很强大的功能，但是在个人精读方面的使用体验仍然不算丝滑，尤其是当前很多软件喜欢把ai聊天框简单放在右侧栏，就个人体验来说用起来有点别扭，并且仍然需要面临在长对话中反复翻找的困境。
+如今ai的发展让我们的文献阅读越来越便捷，但是有时候，我们总还是想要慢下来，为了我们的好奇心和求知欲，为了我们的品味与审美，来认真阅读、学习一些东西。我想个人对知识的理解是我们作为人类而言最宝贵的体验与财富，我们总是会被自然本质的魅力所吸引，而不住地想去理解它，这款产品就是以此为目标诞生的。
 
-AI has made reading research papers easier. Sometimes, though, we want to slow down and let curiosity, a love of learning, and our own sense of beauty guide what we study. To me, coming to understand something for ourselves is one of the most precious experiences we can have as human beings. That understanding is something we get to keep. The beauty of the natural world keeps drawing us in and makes us want to know how it works. That impulse is why I built this tool. I’ve struggled to find software that really helps me learn and make sense of things more quickly on my own. I briefly tried LLM for Zotero and AtlasWork, and took a quick look at Heptabase and related work from Alibaba’s DAMO Academy. These tools are powerful for organizing papers and notes. When I sit down to read a paper closely, the AI chat that so many apps put in a right-hand sidebar feels awkward to use, and finding an earlier answer still means scrolling back through a long conversation.
+AI has made reading research papers easier. Sometimes, though, we want to slow down and let curiosity, a love of learning, and our own sense of beauty guide what we study. To me, coming to understand something for ourselves is one of the most precious experiences we can have as human beings. That understanding is something we get to keep. The beauty of the natural world keeps drawing us in and makes us want to know how it works. That impulse is why I built this tool.
+
+但目前市面上似乎没有好用的，能够加速个人的学习与理解的产品。开发者自己轻度试用了目前市面上类似的产品，包括llm-for-zetore, atlaswork等，也粗略了解了阿里达摩院，heptabase等产品，发现它们在整理文献、知识的方面有着很强大的功能，但是在个人精读方面的使用体验仍然不算丝滑，尤其是当前很多软件喜欢把ai聊天框简单放在右侧栏，就个人体验来说用起来有点别扭，并且仍然需要面临在长对话中反复翻找的困境。
+
+I’ve struggled to find software that really helps me learn and make sense of things more quickly on my own. I briefly tried LLM for Zotero and AtlasWork, and took a quick look at Heptabase and related work from Alibaba’s DAMO Academy. These tools are powerful for organizing papers and notes. When I sit down to read a paper closely, the AI chat that so many apps put in a right-hand sidebar feels awkward to use, and finding an earlier answer still means scrolling back through a long conversation.
 
 顺便吐槽一句，GPT-6.2 真难用。
 
