@@ -52,7 +52,7 @@ button svg { flex-shrink: 0; }
 .app-shell { display: flex; height: 100dvh; overflow: hidden; }
 .sidebar { width: 254px; flex: 0 0 254px; padding: 31px 18px 18px; display: flex; flex-direction: column; background: var(--ls-sidebar); border-inline-end: 1px solid var(--ls-border); z-index: 20; }
 .brand { display: flex; align-items: center; gap: 9px; padding: 0 4px; color: var(--ls-ink); }
-.brand-mark { display: block; flex: none; }
+.brand-mark { display: block; flex: none; margin-inline: -14px -3px; margin-block: -8.5px; }
 .brand-name { flex: 1; min-width: 0; white-space: normal; font-family: system-ui, sans-serif; font-size: 16px; font-weight: 650; letter-spacing: -.35px; }
 .brand-title { display: block; overflow-wrap: anywhere; }
 .brand small { display: block; margin-top: 5px; font-family: "Microsoft YaHei", sans-serif; font-size: 9px; font-weight: 400; letter-spacing: 1.4px; color: var(--ls-muted); line-height: 1.2; }

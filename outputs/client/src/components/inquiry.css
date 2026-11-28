@@ -9,7 +9,6 @@
 @media (max-width: 1200px) { .wiki-launch-button > span { display: none; } }
 .inquiry-home-intro { display: grid; gap: 15px; }
 .inquiry-home-intro h1 { display: flex; align-items: center; gap: .3em; margin: 0; color: var(--ls-ink); font-size: clamp(26px, 4vw, 40px); line-height: 1.2; font-weight: 670; }
-.inquiry-home-intro h1 > img { flex: none; width: 1.8em; height: 1.8em; }
 .inquiry-search-form {
   display: flex; gap: 8px; align-items: center; padding: 6px;
   background: var(--ls-panel); border: 1px solid var(--ls-border); border-radius: 30px;
@@ -174,6 +173,12 @@
   .inquiry-home .reader-home-heading, .inquiry-home .reader-home-actions { gap: 4px; }
   .inquiry-home .reader-home-brand { display: none; }
   .workbench-model summary { max-width: 104px; padding-inline: 6px; }
+}
+@media (min-width: 421px) and (max-width: 759px) {
+  .inquiry-home .reader-home-toolbar { height: auto; min-height: 48px; flex-wrap: wrap; row-gap: 4px; padding-block: 2px; }
+  .inquiry-home .reader-home-heading { flex: 1 0 max-content; }
+  .inquiry-home .reader-home-brand { flex: 1 1 0; inline-size: 0; }
+  .inquiry-home .reader-home-actions { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; margin-inline-start: auto; }
 }
 @media (max-width: 420px) {
   .inquiry-home .reader-home-logo { display: none; }

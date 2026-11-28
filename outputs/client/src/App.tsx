@@ -1648,9 +1648,9 @@ export default function App() {
   const recoveryDialog = recoveryOpen && <RecoveryDialog recovery={Boolean(loadError)} onClose={() => setRecoveryOpen(false)} onRestore={restoreBackup} onCreate={() => checkpoint({ force: true })} onDeleted={invalidateCheckpoint}
     onExport={workspace ? (legacy, currentOnly) => downloadBackup(currentOnly ? current.current?.activeConversationId : undefined, legacy, true) : undefined}
     onExportKnowledge={knowledge.available ? downloadKnowledge : undefined} />;
-  if (!workspace || !active) return <div className="loading-screen"><BrandLogo size={52} /><h1>{__APP_NAME__}</h1><p>{t(loadError || t("正在打开你的阅读空间…"))}</p>{loadError && <div className="recovery-toolbar"><button onClick={() => setRecoveryOpen(true)} className="primary-button">{t("从备份恢复")}</button><button onClick={() => location.reload()} className="secondary-button">{t("重新打开")}</button></div>}{recoveryDialog}</div>;
+  if (!workspace || !active) return <div className="loading-screen"><BrandLogo size={78} /><h1>{__APP_NAME__}</h1><p>{t(loadError || t("正在打开你的阅读空间…"))}</p>{loadError && <div className="recovery-toolbar"><button onClick={() => setRecoveryOpen(true)} className="primary-button">{t("从备份恢复")}</button><button onClick={() => location.reload()} className="secondary-button">{t("重新打开")}</button></div>}{recoveryDialog}</div>;
   if (wikiOpen && wikiRepository) return <>
-    <Suspense fallback={<div className="loading-screen"><BrandLogo size={44} /><p>{t('正在打开个人知识库…')}</p></div>}>
+    <Suspense fallback={<div className="loading-screen"><BrandLogo size={66} /><p>{t('正在打开个人知识库…')}</p></div>}>
       <WikiWorkspace workspace={workspace} cards={knowledge.cards} repository={wikiRepository} resumeId={wikiResume} incoming={wikiMaterial}
         onChanged={invalidateCheckpoint} onRemember={setWikiResume} flushRef={wikiFlush} onExit={() => setWikiOpen(false)} onOpenSource={openWikiSource}
         onLegacy={knowledge.available ? () => { setWikiOpen(false); openKnowledge(); } : undefined} />
@@ -1720,7 +1720,7 @@ export default function App() {
         const to = event.shiftKey ? sidebarSettingsButton.current : sidebarCloseButton.current;
         if (event.target === from) { event.preventDefault(); to?.focus({ preventScroll: true }); }
       }}>
-      <div className="brand"><BrandLogo size={34} className="brand-mark" /><span className="brand-name"><span className="brand-title">{__APP_NAME__}</span></span><button ref={sidebarCloseButton} type="button" className="icon-button sidebar-toggle" aria-label={t('收起侧栏')} title={t('收起侧栏')} onClick={closeSidebar}><PanelLeftClose size={18} /></button></div>
+      <div className="brand"><BrandLogo size={51} className="brand-mark" /><span className="brand-name"><span className="brand-title">{__APP_NAME__}</span></span><button ref={sidebarCloseButton} type="button" className="icon-button sidebar-toggle" aria-label={t('收起侧栏')} title={t('收起侧栏')} onClick={closeSidebar}><PanelLeftClose size={18} /></button></div>
       <button type="button" className="open-reading-file sidebar-home" disabled={fileBusy} onClick={showHome}><Home size={17} />{t('工作台首页')}</button>
       <button type="button" className="open-reading-file" disabled={fileBusy} onClick={() => newConversation()}><Plus size={17} />{t("开启新对话")}</button>
       <button className="open-reading-file" disabled={fileBusy || mainBusyId !== null} onClick={chooseReaderFile}><BookOpen size={17} />{t("打开 PDF / 电子书")}</button>
@@ -2048,7 +2048,7 @@ export function ChatView(props: ChatViewProps) {
         <div ref={chatPosition.contentRef} className="reading-column">
           {conversation.collectedHistory && <CollectedHistory turns={conversation.collectedHistory.turns} />}
           {conversation.messages.length === 0 ? !conversation.collectedHistory && (projectChat ? <p className="inquiry-chat-empty">{t('从下方开始提问，也可以选择项目资料和知识卡片。')}</p> : <div className="empty-state">
-            <BrandLogo size={64} className="empty-symbol" /><div className="eyebrow">THINK WITHOUT LOSING YOUR PLACE</div><h1>{t("让好奇心，")}<br />{t("留在原文旁。")}</h1><p>{conversation.documents?.length ? <><span className="empty-file-status">{t("文件已准备好。点击上方文件可阅读、划选批注；")}<br /></span>{t(conversation.projectId ? '可在输入框旁选择要引用的文件和批注。' : "也可以在下方直接询问论文中的问题。")}</> : <>{t("聊一个想弄懂的话题，或上传一篇论文。")}<br />{t("选中文字后，可以询问 AI，也可以只写自己的批注。")}</>}</p>
+            <BrandLogo size={96} className="empty-symbol" /><div className="eyebrow">THINK WITHOUT LOSING YOUR PLACE</div><h1>{t("让好奇心，")}<br />{t("留在原文旁。")}</h1><p>{conversation.documents?.length ? <><span className="empty-file-status">{t("文件已准备好。点击上方文件可阅读、划选批注；")}<br /></span>{t(conversation.projectId ? '可在输入框旁选择要引用的文件和批注。' : "也可以在下方直接询问论文中的问题。")}</> : <>{t("聊一个想弄懂的话题，或上传一篇论文。")}<br />{t("选中文字后，可以询问 AI，也可以只写自己的批注。")}</>}</p>
           </div>) : <>
             {!projectChat && <div className="reading-guide"><PenLine size={14} /><span>{t("选中回答中的文字，就能在原处批注提问")}</span><span className="guide-end">READ · ASK · KEEP</span></div>}
             {conversation.messages.map((message, index) => <VirtualChatMessage key={message.id} id={message.id} versionId={message.activeVersionId} viewport={chatPosition.viewportRef} visible={props.visible} initial={Math.abs(index - initialIndex) <= 3} pinned={jumpTarget?.id === message.id || Boolean((annotationsBySource.get(`${message.id}:${message.activeVersionId}`) || []).some(annotation => annotation.id === props.openAnnotationId)) || translation?.sourceKey === `${conversation.id}:${message.id}:${message.activeVersionId}`} estimate={message.role === 'user' ? 120 : 450}>{() => {
@@ -2075,7 +2075,7 @@ export function ChatView(props: ChatViewProps) {
               const offerPapers = !message.inquiryIntro && version.status === 'complete' && !version.research && preceding?.role === 'user'
                 && suggestsPaperSearch(activeVersion(preceding).content);
               return <article className="assistant-message" key={message.id} data-message-id={message.id} data-version-id={version.id}>
-                <div className="assistant-label"><BrandLogo size={25} className="mini-brand" /><strong>{__APP_SHORT_NAME__}</strong><span>{version.modelLabel === '资料简报' ? t('资料简报') : version.modelLabel || (message.inquiryIntro ? t('资料导读') : conversation.title.includes(t("体验示例")) ? t("本地示例回答") : settings.mode === 'demo' ? t("本地演示") : settings.model)}</span>{version.status === 'streaming' && !researchRun && <span className="streaming-label"><span />{t(message.inquiryIntro ? '正在准备资料导读…' : '正在思考与书写')}</span>}</div>
+                <div className="assistant-label"><BrandLogo size={37.5} className="mini-brand" /><strong>{__APP_SHORT_NAME__}</strong><span>{version.modelLabel === '资料简报' ? t('资料简报') : version.modelLabel || (message.inquiryIntro ? t('资料导读') : conversation.title.includes(t("体验示例")) ? t("本地示例回答") : settings.mode === 'demo' ? t("本地演示") : settings.model)}</span>{version.status === 'streaming' && !researchRun && <span className="streaming-label"><span />{t(message.inquiryIntro ? '正在准备资料导读…' : '正在思考与书写')}</span>}</div>
                 <AnnotatedAnswer key={version.id} conversationId={conversation.id} messageId={message.id} version={version} annotations={annotations} reservedColors={sourceAnnotations.map(a => a.color)} openAnnotationId={props.openAnnotationId} onOpen={props.onOpen} onCreate={props.onCreate} onUpdate={props.onUpdate} onAsk={props.onAsk} onReask={props.onReask} onStop={props.onStopAnnotation} onDelete={props.onDelete} onReferenceToChat={props.onReferenceToChat} onNotify={props.onNotify} disabled={isRunning} />
                 {researchRun && <div className="inquiry-run chat-research-run" role="status">
                   <span className="inquiry-spinner" aria-hidden="true" />

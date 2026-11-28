@@ -56,8 +56,8 @@ def render_logo(browser):
 def write_splash(logo):
     name = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))['productName']
     splash = Image.new('RGB', (520, 300), '#fff8e7')
-    mark = logo.resize((88, 88), Image.Resampling.LANCZOS)
-    splash.paste(mark, ((splash.width - mark.width) // 2, 41), mark)
+    mark = logo.resize((132, 132), Image.Resampling.LANCZOS)
+    splash.paste(mark, ((splash.width - mark.width) // 2, 8), mark)
     label = ImageDraw.Draw(splash)
     label.text((260, 160), name, font=ImageFont.load_default(size=22), fill='#403526', anchor='mm')
     label.text((260, 197), 'Opening your reading space…', font=ImageFont.load_default(size=13), fill='#6c5a3f', anchor='mm')
@@ -65,15 +65,8 @@ def write_splash(logo):
 
 
 def write_icons(logo):
-    # Give small Windows icons more room for the lettering inside the book.
-    compact = logo.crop((88, 108, 424, 444))
-    mask = Image.new('L', compact.size)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, compact.width - 1, compact.height - 1), radius=64, fill=255)
-    compact.putalpha(mask)
-    sizes = [(size, size) for size in ICON_SIZES]
-    frames = [(compact if size[0] <= 32 else logo).resize(size, Image.Resampling.LANCZOS) for size in sizes]
     logo.save(DESTINATION / 'icon.png')
-    frames[-1].save(DESTINATION / 'icon.ico', sizes=sizes, append_images=frames[:-1])
+    logo.save(DESTINATION / 'icon.ico', sizes=[(size, size) for size in ICON_SIZES])
 
 
 def main():

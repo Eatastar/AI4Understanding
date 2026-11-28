@@ -76,7 +76,7 @@ export default function WikiWorkspace({ workspace, cards, repository, resumeId, 
         <button type="button" className="wiki-action" onClick={() => void transition(onExit)} disabled={navigating}
           aria-label={t('返回阅读器')} title={t('返回阅读器')}><ArrowLeft size={17} /><span>{t('返回阅读器')}</span></button>
         <button type="button" className="wiki-nav-current" onClick={showHome} disabled={navigating}
-          aria-label={t('个人知识库首页')}><BrandLogo size={25} />{t('个人知识库')}</button>
+          aria-label={t('个人知识库首页')}><BrandLogo size={37.5} />{t('个人知识库')}</button>
       </div>
       {onLegacy && <button type="button" className="wiki-action" disabled={navigating} onClick={() => void transition(onLegacy)}><Library size={16} /><span>{t('知识卡片')}</span></button>}
     </header>

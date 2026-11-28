@@ -1,17 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <title>AI4U</title>
   <rect width="512" height="512" rx="112" fill="#F6F4ED" />
-  <g fill="none" stroke="#1E1B3A" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10">
-    <path d="M 136 178.8 L 104 166 L 104 333 L 256 416 L 408 333 L 408 166 L 376 178.8" />
-    <path d="M 136 134 L 236 174 L 256 202 L 276 174 L 376 134 L 376 318 L 256 384 L 136 318 Z" />
-    <path d="M 256 202 L 256 226" />
-    <path d="M 256 336 L 256 416" />
+  <!-- Center the full stroked book and scale its 318-unit width to 512 / φ. -->
+  <g transform="translate(256 256) scale(0.995073592) translate(-256 -273.818194)">
+    <g fill="none" stroke="#1E1B3A" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10">
+      <path d="M 136 178.8 L 104 166 L 104 333 L 256 416 L 408 333 L 408 166 L 376 178.8" />
+      <path d="M 136 134 L 236 174 L 256 202 L 276 174 L 376 134 L 376 318 L 256 384 L 136 318 Z" />
+      <path d="M 256 202 L 256 226" />
+      <path d="M 256 336 L 256 416" />
+    </g>
+    <g fill="#1E1B3A" aria-hidden="true">
+      <path transform="translate(140.9453 296) scale(0.04687500 -0.04687500)" d="M1040 0 977 264H549L481 0H14L508 1434H1044L1509 0ZM768 1122H758Q756 1098 744.0 1043.0Q732 988 623 571H897L797 961Q776 1047 768 1122Z" />
+      <path transform="translate(210.9453 296) scale(0.04687500 -0.04687500)" d="M141 0V1434H573V0Z" />
+      <path transform="translate(242.4141 296) scale(0.04687500 -0.04687500)" d="M1028 1434V530H1231V246H1027V0H652V246H45V541Q205 725 363.5 968.0Q522 1211 621 1434ZM651 530V950Q559 747 398 530Z" />
+      <path transform="translate(299.9922 296) scale(0.04687500 -0.04687500)" d="M1391 655Q1391 310 1233.5 142.5Q1076 -25 748 -25Q442 -25 283.5 142.5Q125 310 125 647V1434H559V631Q559 493 610.5 418.5Q662 344 758 344Q855 344 905.5 414.0Q956 484 956 621V1434H1391Z" />
+    </g>
+    <polygon points="154,314 358,314 336,328 176,328" fill="#F0A85B" />
   </g>
-  <g fill="#1E1B3A" aria-hidden="true">
-    <path transform="translate(140.9453 296) scale(0.04687500 -0.04687500)" d="M1040 0 977 264H549L481 0H14L508 1434H1044L1509 0ZM768 1122H758Q756 1098 744.0 1043.0Q732 988 623 571H897L797 961Q776 1047 768 1122Z" />
-    <path transform="translate(210.9453 296) scale(0.04687500 -0.04687500)" d="M141 0V1434H573V0Z" />
-    <path transform="translate(242.4141 296) scale(0.04687500 -0.04687500)" d="M1028 1434V530H1231V246H1027V0H652V246H45V541Q205 725 363.5 968.0Q522 1211 621 1434ZM651 530V950Q559 747 398 530Z" />
-    <path transform="translate(299.9922 296) scale(0.04687500 -0.04687500)" d="M1391 655Q1391 310 1233.5 142.5Q1076 -25 748 -25Q442 -25 283.5 142.5Q125 310 125 647V1434H559V631Q559 493 610.5 418.5Q662 344 758 344Q855 344 905.5 414.0Q956 484 956 621V1434H1391Z" />
-  </g>
-  <polygon points="154,314 358,314 336,328 176,328" fill="#F0A85B" />
 </svg>

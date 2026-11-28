@@ -2,8 +2,8 @@
   "name": "ai-embedded-paper-pdf-reader-client",
   "productName": "AI4Understanding",
   "shortName": "AI4U",
-  "version": "0.1.46-preview.65",
-  "buildId": "20261128.7",
+  "version": "0.1.46-preview.69",
+  "buildId": "20261128.11",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -56,5 +56,5 @@
     "typescript": "7.0.2",
     "vite": "8.3.4"
   },
-  "buildTime": "2026-11-28T06:17:51Z"
+  "buildTime": "2026-11-28T14:38:53Z"
 }

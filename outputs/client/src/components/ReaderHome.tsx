@@ -83,7 +83,7 @@ export function ReaderHome({ menu, recent, conversations, busy, loading, explore
       const file = event.dataTransfer.files[0]; if (file && !busy) onDropFile(file);
     }}>
     <header className="reader-home-toolbar">
-      <div className="reader-home-heading">{menu}<BrandLogo size={28} className="reader-home-logo" /><span className="reader-home-brand">{__APP_NAME__}</span></div>
+      <div className="reader-home-heading">{menu}<BrandLogo size={42} className="reader-home-logo" /><span className="reader-home-brand">{__APP_NAME__}</span></div>
       <div className="reader-home-actions"><LanguageSelector /><AppearanceButton onOpen={onAppearance} /><TranslationButton /><ShortcutButton />
         {onWiki && <button type="button" className="document-tool-button wiki-launch-button" aria-label={t('个人知识库')} title={t('个人知识库')} onClick={onWiki}><BookOpenText size={17} /><span>{t('个人知识库')}</span></button>}
         <WorkbenchModelMenu settings={settings} busy={busy || exploreBusy} onChooseModel={onChooseModel} onSettings={onSettings} />
@@ -92,7 +92,7 @@ export function ReaderHome({ menu, recent, conversations, busy, loading, explore
     </header>
     <div className="reader-home-content">
       <div className="inquiry-home-intro">
-        <h1><BrandLogo size={72} /><span>{t('从一个问题开始')}</span></h1>
+        <h1><BrandLogo size="1.8em" /><span>{t('从一个问题开始')}</span></h1>
         <form className="inquiry-search-form" onSubmit={event => {
           event.preventDefault();
           const action = homeQuestionAction(question, syncSearch);
