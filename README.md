@@ -18,6 +18,10 @@ I believe the understanding we gain for ourselves is one of the most precious ex
 
 I briefly tried LLM for Zotero and AtlasWork, and looked into Heptabase and related work from Alibaba’s DAMO Academy. They gave me ideas for organizing papers and notes. When I’m reading closely, I want to ask a question beside the line that puzzled me and find the discussion there when I return, without scrolling back through a long sidebar chat.
 
+顺便吐槽一句，GPT-6.2 真难用。
+
+And for the record, GPT-6.2 is a real pain to use.
+
 ## Windows 试用版 / Windows preview
 
 **[下载 Windows x64 试用版（.69，ZIP）][windows-zip]**。右键选择「全部解压」，打开解压后的文件夹，双击 **`AI4Understanding.exe`**。
