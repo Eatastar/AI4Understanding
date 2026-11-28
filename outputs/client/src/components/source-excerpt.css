@@ -1,0 +1,13 @@
+.source-excerpt-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.source-formula { white-space: normal; overflow-wrap: normal; direction: ltr; unicode-bidi: isolate; }
+.source-formula:not(:has(.katex-display)) { display: inline-block; vertical-align: middle; max-width: 100%; overflow-x: auto; }
+.source-formula:has(.katex-display) { display: block; max-width: 100%; overflow-x: auto; }
+.source-formula .katex-display { margin: .35em 0; }
+.source-pdf-scroll { overflow-x: auto; max-width: 100%; }
+.source-pdf-fragment { position: relative; }
+.source-pdf-fragment img { display: block; width: 100%; height: auto; }
+.source-pdf-fragment > span { position: absolute; pointer-events: none; background: rgba(251, 191, 36, .35); mix-blend-mode: multiply; }
+.source-extracted-text { margin-top: .25em; }
+.source-extracted-text > summary { cursor: pointer; width: fit-content; font-size: .9em; color: var(--ls-muted); }
+.reader-source-excerpt { max-height: 16em; overflow: auto; margin: .4em 0; }
+.annotation-quote[data-expanded="false"]:has(.source-pdf-scroll, .source-formula) { display: block; max-height: 12rem; }

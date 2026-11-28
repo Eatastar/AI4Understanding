@@ -251,7 +251,7 @@ export function createAppServer({ env = process.env, distDir = resolve('dist'), 
         if (inquiryCompose && body.kind !== 'main') throw new RequestError(400, '聊天请求类型不正确。');
         if (res.destroyed) return;
         const activeSettings = profiles.forRequest(body.profileId);
-        if (body.reader && (pathname!=='/api/chat' || body.kind!=='annotation' || body.image || body.messages[0]?.role!=='system' || body.messages.length!==4 || body.messages.slice(1).some(m=>m.role!=='user'))) throw new RequestError(400,'阅读资料请求格式无效。');
+        if (body.reader && (pathname!=='/api/chat' || body.kind!=='annotation' || body.messages[0]?.role!=='system' || body.messages.length!==4 || body.messages.slice(1).some(m=>m.role!=='user'))) throw new RequestError(400,'阅读资料请求格式无效。');
         if (body.reader?.connection && ['apiFormat','model','baseURL'].some(k=>activeSettings[k]!==body.reader.connection[k])) throw new RequestError(409,'模型连接已变化，请检查连接后重新提问。');
         if (experiment) {
           const fixed = body.connection;
@@ -296,7 +296,8 @@ export function createAppServer({ env = process.env, distDir = resolve('dist'), 
         };
         try {
           if (body.image && activeSettings.mode === 'demo') throw new RequestError(400, '图片问答需要连接支持图片理解的模型，当前为本地演示。');
-          if (body.image && activeSettings.imageInput === 'unsupported') throw new RequestError(400, '此连接已设置为不支持图片。请切换支持图片理解的模型后重试，图片、圈画和问题已保留。');
+          const textOnlySelection=Boolean(body.reader && body.image && activeSettings.imageInput==='unsupported');
+          if (body.image && activeSettings.imageInput === 'unsupported' && !textOnlySelection) throw new RequestError(400, '此连接已设置为不支持图片。请切换支持图片理解的模型后重试，图片、圈画和问题已保留。');
           if (activeSettings.mode === 'demo') {
             const answer = demoAnswer(body);
             const chunkSize = Math.max(8, Math.ceil(answer.length / 26));
@@ -315,9 +316,9 @@ export function createAppServer({ env = process.env, distDir = resolve('dist'), 
               ? prepareReadingChat(body.kind, requestMessages, body.quote)
               : { messages: requestMessages, systemInstruction: '' };
             if (body.reader || experiment || activeSettings.apiFormat !== 'openai-chat' || body.image) {
-              const result = await streamProtocolReply({ ...activeSettings, messages, reader:body.reader, image: body.image, systemInstruction, signal: controller.signal, fetch: requestFetch, onText: text => send({ type: 'delta', text }), ...(experiment ? { experiment: { temperature: body.connection.temperature } } : {}) });
+              const result = await streamProtocolReply({ ...activeSettings, messages, reader:body.reader, image: textOnlySelection?undefined:body.image, systemInstruction, signal: controller.signal, fetch: requestFetch, onText: text => send({ type: 'delta', text }), ...(experiment ? { experiment: { temperature: body.connection.temperature } } : {}) });
               if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
-              send({ type: 'done', modelLabel: activeSettings.model, ...(result.readerEstimate!==undefined?{readerEstimate:result.readerEstimate}:{}), ...(result.usage ? { usage: result.usage } : {}) });
+              send({ type: 'done', modelLabel: activeSettings.model, ...(result.readerEstimate!==undefined?{readerEstimate:result.readerEstimate}:{}), ...(textOnlySelection || result.readerImage?{readerImage:textOnlySelection?'unsupported':result.readerImage}:{}), ...(result.usage ? { usage: result.usage } : {}) });
               return;
             }
             const provider = createOpenAICompatible({ name: 'custom', baseURL: activeSettings.baseURL, ...(activeSettings.apiKey ? { apiKey: activeSettings.apiKey } : {}), fetch: requestFetch });

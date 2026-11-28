@@ -20,6 +20,8 @@ export function useWorkspace() {
   const session = useRef<WorkspaceSession | null>(null);
   if (!session.current) session.current = new WorkspaceSession({ save: value => saveWorkspace(value, { trusted: true }), onChange: value => { current.current = value; setWorkspace(value); }, onStatus: setSaveStatus });
   const backupRevision = useRef(-1);
+  const knowledgeRevision = useRef(0);
+  const savedKnowledgeRevision = useRef(-1);
   const backupQueue = useRef(Promise.resolve());
   const flush = useCallback(() => session.current!.flush(), []);
   const checkpoint = useCallback(async (options: { force?: boolean } = {}) => {
@@ -27,9 +29,11 @@ export function useWorkspace() {
     const result = backupQueue.current.catch(() => {}).then(async () => {
       await flush();
       const revision = session.current!.revision;
-      if (!options.force && revision === backupRevision.current) return;
+      const library = knowledgeRevision.current;
+      if (!options.force && revision === backupRevision.current && library === savedKnowledgeRevision.current) return;
       const entry = await writeLocalCheckpoint(current.current!);
       backupRevision.current = revision;
+      savedKnowledgeRevision.current = library;
       setLastBackup(entry.createdAt); setBackupWarning('');
     });
     backupQueue.current = result;
@@ -55,14 +59,14 @@ export function useWorkspace() {
       session.current!.dispose();
     };
   }, [flush, checkpoint]);
-  const invalidateCheckpoint = useCallback(() => { backupRevision.current = -1; setLastBackup(undefined); }, []);
+  const invalidateCheckpoint = useCallback(() => { knowledgeRevision.current++; backupRevision.current = -1; setLastBackup(undefined); }, []);
   const update = useCallback((change: (previous: Workspace) => Workspace) => session.current!.update(change), []);
   const commitFileChanges = useCallback((change: (previous: Workspace) => Workspace, file?: { id: string; bytes: Uint8Array }) =>
     session.current!.commit(change, (next, previous) => saveWorkspaceAndPruneFiles(next, previous, file ? [file] : undefined), '正在保存…'), []);
   const purge = useCallback((target: TrashTarget) => session.current!.commit(previous => permanentlyDelete(previous, target), saveWorkspaceAndPruneFiles), []);
   const removeChatTurn = useCallback((conversationId: string, messageId: string) => session.current!.commit(previous => deleteChatTurn(previous, conversationId, messageId), saveWorkspaceAndPruneFiles, '正在删除本轮对话…'), []);
   const removeChatTurns = useCallback((conversationId: string, messageIds: readonly string[]) => session.current!.commit(previous => deleteChatTurns(previous, conversationId, messageIds), saveWorkspaceAndPruneFiles, '正在删除所选对话…'), []);
-  const recover = useCallback(async (text: string) => {
+  const recover = useCallback(async (text: unknown) => {
     const restored = await restoreWorkspaceWithFiles(text);
     session.current!.load(restored);
     setLoadError(''); backupRevision.current = -1;

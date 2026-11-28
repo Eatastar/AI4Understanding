@@ -211,7 +211,7 @@ function SubAnnotationConversation({ annotation, selection, child, quote, disabl
     if (firstError && actions.askChild(annotation, { childId: selection.id, question: firstError.question })) scrollToBottom();
   };
   const showComposer = !!editor || !isNote && (answered || !pending && !firstError);
-  const prompt = writingNote ? '写下你的批注…' : answered && !editor ? '继续追问…' : '这一步哪里还没看懂？';
+  const prompt = writingNote ? '写下你的批注…' : answered && !editor ? '继续追问，或直接说哪里需要纠正…' : '这一步哪里还没看懂？';
   const inputLabel = writingNote ? '普通批注正文' : answered && !editor ? '继续追问…' : '子批注问题';
   const submitLabel = editor?.kind === 'edit' || editor?.kind === 'note' ? '保存修改' : writingNote ? '保存批注' : '发送';
 
@@ -221,7 +221,7 @@ function SubAnnotationConversation({ annotation, selection, child, quote, disabl
       <blockquote className="sub-annotation-excerpt" aria-label={t('子批注选段')}><MathMarkdown>{quote}</MathMarkdown></blockquote>
       {child && <BranchSource annotation={annotation} child={child}/>}
       {selection.draft && <div className="annotation-mode-switch sub-annotation-mode" role="group" aria-label={t('批注类型')}>
-        <button type="button" aria-pressed={draftMode === 'ask'} onClick={() => setDraftMode('ask')}>{t('询问 AI')}</button>
+        <button type="button" aria-pressed={draftMode === 'ask'} onClick={() => setDraftMode('ask')}>{t('追问这句话')}</button>
         <button type="button" aria-pressed={draftMode === 'note'} onClick={() => setDraftMode('note')}>{t('只写批注')}</button>
       </div>}
       {child?.note !== undefined && <div className="sub-annotation-turn">{renderBody(child.note, 0, true)}</div>}
@@ -281,8 +281,9 @@ function SubAnnotationConversation({ annotation, selection, child, quote, disabl
           onClick={() => setEditor(child.note === undefined ? { kind: 'edit', question: child.question, answer: child.answer } : { kind: 'note', note: child.note })}><Pencil size={13} /></button>
         {onReferenceToChat && <button type="button" className="annotation-text-button" disabled={disabled}
           onClick={() => onReferenceToChat(child.id)}><MessageSquareQuote size={13} />{t('引用到聊天')}</button>}
+        {actions.toWiki && <button type="button" className="annotation-text-button" disabled={disabled} onClick={()=>actions.toWiki?.(annotation.conversationId,annotation.messageId,annotation.versionId,undefined,annotation,child.id)}>{t('整理到 Wiki')}</button>}
         {saveKnowledge && <button type="button" className="annotation-text-button"
-          onClick={() => saveKnowledge(annotation, child.id)}><BookmarkPlus size={13} />{t('存入知识库')}</button>}
+          onClick={() => saveKnowledge(annotation, child.id)}><BookmarkPlus size={13} />{t('存为知识卡片')}</button>}
       </div>}
     </footer>
   </>;

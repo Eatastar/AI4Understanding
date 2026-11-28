@@ -23,6 +23,33 @@ const streams: Record<string, string> = {
   'openai-responses': 'data: {"type":"response.output_text.delta","delta":"Image answer"}\n\ndata: {"type":"response.completed","response":{"status":"completed"}}\n\n',
   'anthropic-messages': 'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Image answer"}}\n\ndata: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}\n\ndata: {"type":"message_stop"}\n\n',
 };
+for (const format of ['openai-responses','openai-chat','anthropic-messages']) test(format+' budgets a reader image separately from the unchanged text',async()=>{
+  const send=async(cap:number)=>{
+    let body:any;
+    const result=await streamProtocolReply({apiFormat:format,baseURL:'https://example.invalid/v1',model:'fixture',messages,image:syntheticImages.png,
+      reader:{inputCap:cap,outputCap:2048},onText:()=>{},fetch:async(_:string,init:RequestInit)=>{
+        body=JSON.parse(String(init.body));return new Response(streams[format]);
+      }});
+    return {result,body};
+  };
+  const rich=await send(4000),plain=await send(420);
+  assert.equal(rich.result.readerImage,'sent');assert.equal(plain.result.readerImage,'budget');
+  assert.ok(JSON.stringify(rich.body).includes(syntheticImages.png.dataURL.split(',')[1]));
+  assert.ok(!JSON.stringify(plain.body).includes(syntheticImages.png.dataURL.split(',')[1]));
+  assert.equal((plain.body.input??plain.body.messages).at(-1).content,'FIGURE_QUESTION');
+});
+test('optional reader image retries text only on an explicit pre-output modality rejection',async()=>{
+  const run=async(status:number,code:string)=>{
+    const calls:any[]=[];
+    const result=streamProtocolReply({apiFormat:'openai-responses',baseURL:'https://example.invalid/v1',model:'fixture',messages,image:syntheticImages.png,reader:{inputCap:4000,outputCap:2048},onText:()=>{},
+      fetch:async(_:string,init:RequestInit)=>{calls.push(JSON.parse(String(init.body)));return calls.length===1?new Response(JSON.stringify({error:{code}}),{status}):new Response(streams['openai-responses']);}});
+    return {result,calls};
+  };
+  const unsupported=await run(400,'unsupported_modality');
+  assert.equal((await unsupported.result).readerImage,'unsupported');assert.equal(unsupported.calls.length,2);
+  assert.equal(unsupported.calls[1].input.at(-1).content,'FIGURE_QUESTION');
+  const quota=await run(429,'rate_limit');await assert.rejects(quota.result);assert.equal(quota.calls.length,1);
+});
 for (const format of Object.keys(streams)) test(`${format} places one image only in the explicit final user question`, async () => {
   const original = structuredClone(messages); let result = '', seen: any;
   await streamProtocolReply({ apiFormat: format, baseURL: 'https://example.invalid/v1', model: 'synthetic-vision', apiKey: 'fake-test-key', messages, image: syntheticImages.png, onText: (chunk: string) => { result += chunk; }, fetch: async (_url: string, options: RequestInit) => { seen = JSON.parse(options.body as string); return new Response(streams[format], { headers: { 'content-type': 'text/event-stream' } }); } });

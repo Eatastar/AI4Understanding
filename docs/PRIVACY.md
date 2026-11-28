@@ -83,11 +83,17 @@ External PDF web links open their HTTP/HTTPS addresses in the system browser, wh
 
 Chat reading preferences store only local conversation/reply identifiers and display positions. They contain no message text, PDF text or credentials, are excluded from conversation backups and are never sent to AI. Recycled conversations retain their preferences for recovery; permanent conversation removal clears the saved position.
 
+## PDF 选区的「问 AI」 / Ask AI about a PDF selection
+
+在 PDF 中选中文字后提交「问 AI」，阅读器会把问题和文字上下文发送给当前连接。客户端在本机检查选区排版。如果上下标、横线或多行对齐等排版可能影响含义，且当前连接和预算允许，请求会附上至多一张该选区的原图。普通正文按文字发送。单纯划选或打开「查看原文」只在本机显示资料。回答的「原文出处」会标明实际附图或改用文字的情况。
+
+Submitting Ask AI for selected PDF text sends the question and its text context to the current connection. The reader checks the selection’s layout locally. When features such as shifted baselines, overbars or aligned rows may affect meaning, and the connection and budget allow it, the request includes up to one crop of the selection. Ordinary prose is sent as text. Selecting text or opening the source preview displays the material locally. The answer’s source details indicate when a crop was sent or the reader fell back to text.
+
 ## 图片批注问答 / Image Q&A annotations
 
-只有主动发送图片问题时，才向所选连接发送本次原始配色选图、圈画、问题及所属文档的文字资料；小文件默认全文，大文件按需引用，不带聊天及其他批注。重新提问成功后才替换原问答和圈画。明确只支持文字的连接可在设置中标记并提前阻止请求；未知能力依据上游明确错误提示，不会自动发送测试图片或产生探测调用。
+在手动图片批注中，提交问题时会向所选连接发送原色选图、圈画、问题和所属文档的文字资料。小文件默认提供全文，大文件按需引用，资料范围限于所属文档。重新提问成功后才替换原问答和圈画。用户可在设置中标记纯文字连接，提前阻止手动图片请求。对于能力未知的连接，客户端根据服务返回的明确错误提示用户，不另发探测图片。
 
-Only sending an image question transmits its original-color crop, markings, question and source-document text to the selected connection. Small files use full text and large files use relevant excerpts by default, without chat or other annotations. A successful re-question replaces the old Q&A and markings; failures keep them. Mark known text-only connections in settings to block image requests. Unknown capabilities are classified from explicit upstream errors, without automatic probe images or billable test calls.
+Submitting a manual image annotation sends its original-color crop, markings, question and source-document text to the selected connection. Small files use full text and large files use relevant excerpts by default. This material excludes chats and other annotations. A new answer and its markings replace the previous ones after a successful reply. Marking a connection as text-only in settings blocks manual image requests. For a connection with unknown capabilities, the client reports an explicit image error from the service without sending a separate probe image.
 
 保存和备份只新增文档关联、页码、相对选区及矢量笔迹，不为每条图片批注持久保存截图或 Base64。重新打开时从已保存 PDF 还原选图；原 PDF 仍按原附件机制保留。派生原色选图采用最多 32 MiB / 24 项的临时缓存，发送图片最多 1 MiB、最长边 1800px、200 万像素；活动预览、合成画布与 PDF 页面内存另计，收起或关闭后释放相应资源。图片批注备份请用 v0.1.26 或更新版本恢复。
 

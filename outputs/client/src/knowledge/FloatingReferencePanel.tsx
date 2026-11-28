@@ -15,8 +15,9 @@ const labels: Record<ReferenceFilter, string> = {
 const viewportSize = () => ({ width: Math.max(1, window.innerWidth), height: Math.max(1, window.innerHeight) });
 type PointerGesture = { id: number; kind: 'move' | 'resize'; x: number; y: number; frame: ReferenceFrame };
 
-export function FloatingReferencePanel({ items, pageId, title, citedSources, onInsert }: {
-  items: readonly ReferenceItem[]; pageId?: string; title: string; citedSources: ReadonlySet<string>; onInsert: (item: ReferenceItem) => void;
+export function FloatingReferencePanel({ items, pageId, title, citedSources, onInsert, pinnedId, onBrowse, aiSources, toggleAI }: {
+  onBrowse:()=>void; aiSources?:readonly string[]; toggleAI:(id:string)=>void;
+  pinnedId?: string; items: readonly ReferenceItem[]; pageId?: string; title: string; citedSources: ReadonlySet<string>; onInsert: (item: ReferenceItem) => void;
 }) {
   const [preferences, setPreferences] = useState(loadReferencePreferences);
   const current = useRef(preferences);
@@ -39,19 +40,20 @@ export function FloatingReferencePanel({ items, pageId, title, citedSources, onI
   const titleNeedle = title.trim().toLowerCase();
   const matches = useMemo(() => {
     const score = (item: ReferenceItem) => {
+      if (item.id === pinnedId) return 4;
       if (pageId && item.linkedPageIds.includes(pageId)) return 3;
       if (citedSources.has(item.sourceId)) return 2;
       return titleNeedle.length >= 2 && item.title.toLowerCase().includes(titleNeedle) ? 1 : 0;
     };
-    return items.flatMap(item => (
+    return items.flatMap(item => item.id === pinnedId || (
       (preferences.filter === 'all' || item.kind === preferences.filter) &&
       (!query || item.title.toLowerCase().includes(query) || item.sourceTitle.toLowerCase().includes(query) || item.content.toLowerCase().includes(query))
     ) ? [{ item, score: score(item) }] : []).sort((a, b) => b.score - a.score);
-  }, [items, preferences.filter, query, pageId, titleNeedle, citedSources]);
+  }, [items, preferences.filter, query, pageId, titleNeedle, citedSources, pinnedId]);
 
   useLayoutEffect(() => {
     const body = list.current;
-    if (body) body.scrollTop = current.current.scroll;
+    if (body) body.scrollTop = pinnedId ? 0 : current.current.scroll;
     return () => {
       if (body) current.current = { ...current.current, scroll: body.scrollTop };
       saveReferencePreferences(current.current);
@@ -146,11 +148,11 @@ export function FloatingReferencePanel({ items, pageId, title, citedSources, onI
       <div className="wiki-reference-controls">
         <div className="wiki-reference-filters" role="group" aria-label={t('资料类型')}>
           {(['all', ...referenceKinds] as const).map(kind => <button key={kind} type="button" aria-pressed={kind === preferences.filter}
-            onClick={() => changeFilter({ filter: kind })}>{t(labels[kind])}</button>)}
+            onClick={() => {onBrowse();changeFilter({ filter: kind });}}>{t(labels[kind])}</button>)}
         </div>
         <label className="wiki-reference-search"><Search size={14} aria-hidden="true" />
           <input type="search" aria-label={t('搜索参考资料')} placeholder={t('搜索参考资料')} maxLength={200} value={preferences.query}
-            onChange={event => changeFilter({ query: event.target.value })} />
+            onFocus={onBrowse} onChange={event => {onBrowse();changeFilter({ query: event.target.value });}} />
         </label>
       </div>
       <div className="wiki-reference-list" ref={list} onScroll={event => { current.current = { ...current.current, scroll: event.currentTarget.scrollTop }; }}>
@@ -158,7 +160,7 @@ export function FloatingReferencePanel({ items, pageId, title, citedSources, onI
         {matches.slice(0, preferences.limit).map(({ item }) => {
           const expanded = preferences.expanded === item.id;
           const location = [item.sourceTitle === item.title ? '' : item.sourceTitle, item.locator?.page ? t('第 {0} 页', [item.locator.page]) : ''].filter(Boolean).join(' · ');
-          return <article key={item.id} className="wiki-reference-card" draggable onDragStart={event => {
+          return <article key={item.id} className="wiki-reference-card" data-current={item.id === pinnedId || undefined} draggable onDragStart={event => {
             event.dataTransfer.setData(WIKI_REFERENCE_DRAG, item.id);
             event.dataTransfer.effectAllowed = 'copy';
           }}>
@@ -171,6 +173,7 @@ export function FloatingReferencePanel({ items, pageId, title, citedSources, onI
               ? <div className="wiki-reference-detail"><MathMarkdown referencePreview>{item.content}</MathMarkdown></div>
               : <p className="wiki-reference-detail wiki-reference-plain">{item.content}</p>)}
             {!expanded && <p className="wiki-reference-excerpt">{textPreview(item.content, 360)}</p>}
+            {aiSources && <label className="wiki-ai-source"><input type="checkbox" checked={aiSources.includes(item.id)} onChange={()=>toggleAI(item.id)}/>{t('用于本次 AI 编辑')}</label>}
             <button type="button" className="wiki-reference-insert" onMouseDown={event => event.preventDefault()} onClick={() => onInsert(item)}>
               <ArrowDownToLine size={13} />{t('插入引用')}
             </button>

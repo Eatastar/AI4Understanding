@@ -1,7 +1,7 @@
 import { t, getLocale, localeDirection } from './i18n/locale';
 import { downloadJson } from './adapters/download';
 import { useLocale } from './i18n/react';
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { AssistantRuntimeProvider, ComposerPrimitive, ThreadPrimitive, useExternalStoreRuntime } from '@assistant-ui/react';
 import type { ThreadMessageLike } from '@assistant-ui/react';
@@ -13,7 +13,8 @@ import { readerIndex, evidenceSearchHit } from './domain/reader-evidence';
 import { isEbookKind } from './domain/types';
 import type { Annotation, ChatMessage, ChatTextReference, Conversation, DocumentAttachment, InputMessage, MessageVersion, ModelSettings, ProfileInput, Workspace } from './domain/types';
 import { activeVersion, addAssistantVersion, completeAnnotation, createAssistantMessage, createConversation, createSiblingAnnotation, createUserMessage, deleteAnnotation, restoreAnnotation, deleteConversation, restoreConversation, deleteProjects, restoreProject, prepareAnnotationRequest, updateAnnotationCopy, saveNoteAnnotation, makeId } from './domain/workspace';
-import { exportWorkspaceBlob, importWorkspaceWithFiles, getDocumentBytes } from './adapters/storage';
+import { snapshotKnowledge, restoreKnowledge } from './adapters/knowledge-backup';
+import { parseBackupData, exportWorkspaceBlob, importWorkspaceWithFiles, getDocumentBytes } from './adapters/storage';
 import { deleteProfile, getSettings, saveProfile, selectProfile, streamReply } from './adapters/model';
 import { AnnotatedAnswer } from './components/AnnotatedAnswer';
 import { SettingsDialog } from './components/SettingsDialog';
@@ -33,6 +34,7 @@ import { SubAnnotationStreams } from './domain/sub-annotation-streams';
 import { subAnnotationPath, subAnnotationSubtree } from './domain/sub-annotation-tree';
 import { annotationWindows, type ChildAnnotationWindow } from './domain/companion-view';
 import { AnnotationActions, type SubAnnotationQuestion } from './components/AnnotationActions';
+import { readPdfExcerpt, selectionSourceStart, type OpenReaderPdf } from './adapters/pdf-excerpt';
 import { AnnotationAnchors } from './components/annotation-anchors';
 import { AnnotationWindows } from './components/AnnotationWindows';
 import { recycleBin, type TrashTarget } from './domain/trash';
@@ -84,7 +86,9 @@ import { briefInquiry, downloadResearchPdf, inquiryIntroduction, inquiryReplyTex
 import { ProjectOverview, type InquiryRun } from './components/ProjectOverview';
 import { ResearchSourceCard, researchStepText } from './components/ResearchSourceCard';
 import { ApiSetupPrompt, shouldRemindAboutApi, WebSearchDialog } from './components/InquirySettings';
-import type { SourceCitation } from './knowledge/wiki-types';
+import { hasWikiSource, selectedWikiMaterial } from './knowledge/legacy-reader-adapter';
+import { buildDocumentSearch, searchDocument } from './domain/reader-navigation';
+import type { ReferenceItem, SourceCitation } from './knowledge/wiki-types';
 
 const WikiWorkspace = lazy(() => import('./knowledge/WikiWorkspace'));
 const DEFAULT_SETTINGS: ModelSettings = { mode: 'demo', baseURL: 'https://api.openai.com/v1', model: '', systemPrompt: DEFAULT_RESPONSE_PROMPT, hasApiKey: false, apiFormat: 'openai-chat', profiles: [], activeProfileId: null, persistence: 'session' };
@@ -115,8 +119,10 @@ export default function App() {
   useEffect(() => { document.documentElement.lang = locale; document.documentElement.dir = localeDirection(locale); document.title = __APP_NAME__; desktop()?.setLocale?.(locale); }, [locale]);
   const { workspace, current, update, saveStatus, loadError, flush, checkpoint, invalidateCheckpoint, recover, purge, removeChatTurns, commitFileChanges, backupWarning, lastBackup } = useWorkspace();
   const knowledge = useKnowledgeBase();
+  useEffect(() => { invalidateCheckpoint(); }, [knowledge.cards, invalidateCheckpoint]);
   const wikiRepository = desktop()?.wiki;
   const [wikiOpen, setWikiOpen] = useState(false);
+  const [wikiMaterial,setWikiMaterial] = useState<ReferenceItem>();
   const [wikiResume, setWikiResume] = useState<string>();
   const wikiFlush = useRef<(() => Promise<void>) | null>(null);
   const { appearance, setAppearance, saved: appearanceSaved } = useReaderAppearance();
@@ -139,6 +145,7 @@ export default function App() {
   const readerLocation = useRef<{ documentId: string; pageNumber: number } | undefined>(undefined);
   const onReaderLocation = useCallback((location: { documentId: string; pageNumber: number }) => { readerLocation.current = location; }, []);
   const [readerPageJump, setReaderPageJump] = useState<ReaderPageJump | null>(null);
+  const [readerPdf, setReaderPdf] = useState<OpenReaderPdf | null>(null);
   const onPageJumped = useCallback((jump: ReaderPageJump) => setReaderPageJump(previous => previous === jump ? null : previous), []);
   const changeContextMode = (value: DocumentContextMode) => { setContextMode(value); if (!saveDocumentContextMode(value)) notify('资料范围设置仅在本次有效。'); };
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -402,17 +409,20 @@ export default function App() {
     setSidebarOpen(false);
     setKnowledgeOpen(true);
   }
-  function openWiki() {
+  function openWiki() { showWiki(); }
+  function showWiki(material?: ReferenceItem) {
     if (!wikiRepository || fileOperation.current || closingRef.current) return;
     document.dispatchEvent(new Event('learn:save-edits'));
     // An open annotation can be on an earlier page than the saved reading position.
     if (readerFocused) setOpenAnnotationId(null);
     setSidebarOpen(false);
+    setWikiMaterial(material);
     setWikiOpen(true);
   }
-  function openWikiSource({ locator }: SourceCitation) {
+  function openWikiSource(citation: SourceCitation) {
     const snapshot = current.current;
-    if (!snapshot || fileOperation.current || closingRef.current) return false;
+    if (!snapshot || fileOperation.current || closingRef.current || !hasWikiSource(snapshot, knowledge.cards, citation)) return false;
+    const { locator, refId } = citation;
     if (locator.url) {
       const url = researchLink(locator.url);
       if (!url) return false;
@@ -434,20 +444,38 @@ export default function App() {
       if (!ref || locator.page !== undefined && !ref.document.pages.some(page => page.pageNumber === locator.page)) return false;
       const owner = findConversation(snapshot, ref.conversationId);
       const annotation = owner?.annotations.find(note => note.id === locator.annotationId && note.deletedAt === undefined);
+      const pageIndex=ref.document.pages.findIndex(p=>p.pageNumber===locator.page);
+      const page=ref.document.pages[pageIndex];
+      if (locator.versionId && page?.versionId!==locator.versionId) return false;
+      let sourceHit;
+      if (page && locator.quote && !annotation && !locator.bbox) {
+        const result=searchDocument(buildDocumentSearch(ref.document.pages),locator.quote,Math.max(2,(locator.start??0)+2),pageIndex,pageIndex+1);
+        const hit=locator.start!==undefined ? result.hits.find(h=>h.start===locator.start) : result.count===1 ? result.hits[0] : undefined;
+        if (hit) sourceHit={hit,query:locator.quote};
+        else if (locator.start!==undefined) return false;
+      }
       openReaderReference(ref);
       if (locator.page !== undefined) setReaderPageJump({
-        documentId: ref.document.id, pageNumber: locator.page, annotationId: annotation?.id, bbox: locator.bbox,
+        documentId: ref.document.id, pageNumber: locator.page, annotationId: annotation?.id, bbox: locator.bbox, sourceHit,
       });
       openAnnotation(annotation);
       setWikiOpen(false);
       return true;
     }
     const owner = locator.conversationId && findConversation(snapshot, locator.conversationId);
-    if (!owner) return false;
+    if (!owner) {
+      let parts;
+      try { parts=JSON.parse(refId); } catch { return false; }
+      const card=Array.isArray(parts) && parts[0]==='card' && knowledge.cards.find(item=>item.id===parts[1]);
+      if (!card) return false;
+      setWikiOpen(false);setKnowledgeDraft(card);return true;
+    }
     if (owner.isProject) openProject(owner.id);
     else {
       const message = locator.messageId && owner.messages.find(item => item.id === locator.messageId);
       if (locator.messageId && !message) return false;
+      if (message && locator.versionId && !message.versions.some(v=>v.id===locator.versionId)) return false;
+      if (message && locator.versionId && message.activeVersionId!==locator.versionId) setVersion(owner.id,message.id,locator.versionId);
       if (message) openSourceTurn(owner.id, [message.id]);
       else showChat(owner);
       openAnnotation(owner.annotations.find(note => note.id === locator.annotationId && note.deletedAt === undefined));
@@ -656,13 +684,14 @@ export default function App() {
     else newConversation();
     setSidebarOpen(compactSidebar);
   }
-  function newConversation(projectId?: string) {
+  function newConversation(projectId?: string, title = t('新对话')) {
     if (fileOperation.current || closingRef.current) return;
-    const conversation = { ...createConversation(t('新对话')), ...(projectId ? { projectId } : {}) };
+    const conversation = { ...createConversation(title), ...(projectId ? { projectId } : {}) };
     document.dispatchEvent(new Event('learn:save-edits'));
     try { update(w => projectId ? createProjectChat(w, projectId, conversation) : { ...w, conversations: [conversation, ...w.conversations], activeConversationId: conversation.id }); }
     catch (error) { notify(errorText(error)); return; }
     showChat(conversation);
+    return conversation;
   }
   function updateInquiry(projectId: string, change: (previous: Inquiry) => Inquiry) {
     mutateConversation(projectId, project => ({ ...project, inquiry: change(project.inquiry || {}), updatedAt: Date.now() }));
@@ -746,21 +775,21 @@ export default function App() {
   }
   function exploreQuestion({ question, pane: destination }: HomeQuestionAction) {
     if (inquiryRequest.current || fileOperation.current || mainRequest.current || closingRef.current) return false;
-    const messages = destination === 'overview' ? inquiryTurn(question) : [];
+    if (destination === 'chat') {
+      const chat = newConversation(undefined, question.slice(0, 25));
+      if (chat) void sendMain(chat.id, question);
+      return Boolean(chat);
+    }
+    const messages = inquiryTurn(question);
     const project = { ...createProject(question.slice(0, 80)), inquiry: { question } };
     const chat = { ...createConversation(question.slice(0, 25)), projectId: project.id, messages };
     document.dispatchEvent(new Event('learn:save-edits'));
     try { update(w => createProjectChat({ ...w, conversations: [project, ...w.conversations] }, project.id, chat)); }
     catch (error) { notify(errorText(error)); return false; }
     setChatTextReference(null); setChatAnnotationRequest(null);
-    if (destination === 'overview') {
-      openProject(project.id);
-      const intro = messages[1];
-      void runInquiry(project.id, 'search', undefined, { conversationId: chat.id, messageId: intro.id, versionId: intro.activeVersionId, question });
-    } else {
-      showChat(chat);
-      void sendMain(chat.id, question);
-    }
+    openProject(project.id);
+    const intro = messages[1];
+    void runInquiry(project.id, 'search', undefined, { conversationId: chat.id, messageId: intro.id, versionId: intro.activeVersionId, question });
     return true;
   }
   function startSavedInquiry(project: Conversation) {
@@ -1233,7 +1262,9 @@ export default function App() {
     const doc=sourceDocument(annotation,plan.report);
     if (!doc || readerIndex(doc).version!==plan.report.documentVersion) throw new Error('原文版本已经变化，请重新划选。');
     const report=finishReport(plan,answer,result.modelLabel,result.usage,readerIndex(doc).byId)!;
-    return {...report,estimatedInput:result.readerEstimate??report.estimatedInput};
+    return {...report,estimatedInput:result.readerEstimate??report.estimatedInput,
+      ...(result.readerImage?{selectionImage:result.readerImage}:{}),
+      ...(result.readerImage==='sent'?{priced:false,maxEstimateUSD:undefined,costUSD:undefined}:{})};
   }
   async function askAnnotation(conversationId: string, annotationId: string, figureOptions?: { image: PreparedFigureImage; profileId?: string | null }) {
     if (closingRef.current) return;
@@ -1261,7 +1292,23 @@ export default function App() {
     const pending=()=>annotationRequests.current.get(annotationId)===controller && current.current?.conversations.some(c=>c.id===conversationId && c.deletedAt===undefined && c.annotations.some(a=>a.id===annotationId && a.deletedAt===undefined && (a.status==='generating'||a.reask?.status==='generating')));
     let answer = '';
     try {
-      const image = figureOptions ? { dataURL: await figureDataURL(figureOptions.image, controller.signal), width: figureOptions.image.width, height: figureOptions.image.height } : undefined;
+      let selectedImage: import('./adapters/figure').FigureImage | undefined = figureOptions?.image;
+      let localImageStatus: 'unsupported' | 'budget' | 'unavailable' | undefined;
+      const plan=prepared.plan, note=prepared.annotation;
+      if (plan && settings.mode==='api' && readerPdf?.documentId===plan.report.documentId) {
+        const doc=sourceDocument(note,plan.report);
+        const page=doc?.pages.find(p=>p.messageId===note.messageId && p.versionId===note.versionId);
+        if (doc?.kind==='pdf' && page && readerIndex(doc).version===plan.report.documentVersion) {
+          try {
+            const excerpt=await readPdfExcerpt(readerPdf,page,note.quote,selectionSourceStart(note,page),undefined,controller.signal,'question');
+            if (excerpt && settings.imageInput==='unsupported') localImageStatus='unsupported';
+            else if (excerpt && plan.guard.maxUSD!==undefined) localImageStatus='budget';
+            else selectedImage=excerpt?.image;
+          } catch { controller.signal.throwIfAborted(); localImageStatus='unavailable'; }
+        }
+      }
+      const image=selectedImage?{dataURL:await figureDataURL(selectedImage,controller.signal),width:selectedImage.width,height:selectedImage.height}:undefined;
+      if (!pending()) return;
       const profile = figureOptions ? (figureOptions.profileId === undefined ? {} : { profileId: figureOptions.profileId }) : settings.activeProfileId ? { profileId: settings.activeProfileId } : settings.mode === 'demo' ? { profileId: null } : {};
       const result = await streamReply({ messages: prepared.messages, kind: 'annotation', quote: prepared.annotation.quote, reader:prepared.plan?.guard, ...profile, ...(image ? { image } : {}) }, delta => {
         if (!pending() || controller.signal.aborted) return;
@@ -1271,7 +1318,7 @@ export default function App() {
       }, controller.signal);
       if (!pending()) return;
       controller.signal.throwIfAborted();
-      const report=finishReaderPlan(prepared.plan,prepared.annotation,answer,result);
+      const report=finishReaderPlan(prepared.plan,prepared.annotation,answer,localImageStatus?{...result,readerImage:localImageStatus}:result);
       mutateConversation(conversationId, c => completeAnnotation(c, annotationId, answer, prepared.annotation.figure ? result.modelLabel : undefined,report));
     } catch (e) {
       if (!pending()) return;
@@ -1368,23 +1415,31 @@ export default function App() {
       const source = selected && !selected.isProject ? chatBackup(snapshot, selected) : snapshot;
       if (legacy && source.conversations.some(c => c.isProject || c.annotations.some(annotation => annotation.summaries?.length))) throw new Error('项目与聊天总结需要新版备份，请使用默认导出格式。');
       if (legacy && source.conversations.some(c => c.documents?.some(d => isEbookKind(d.kind)))) throw new Error('电子书记录需要新版备份，请使用默认导出格式。');
-      const blob = await exportWorkspaceBlob(source, { compact: !legacy });
+      const archive = source===snapshot && !legacy ? await snapshotKnowledge() : undefined;
+      const blob = await exportWorkspaceBlob(source, { compact: !legacy, knowledge: archive });
       downloadJson(blob, 'ai-paper-pdf-reader-' + (legacy ? t("兼容旧版-") : '') + t("备份-") + new Date().toISOString().slice(0, 10) + '.json');
-      notify('完整备份已导出，包含附件原文件、所有回答版本和批注。');
+      notify(archive ? '完整备份已导出，含工作区、原附件、Wiki 历史和知识卡片。' : '工作区备份已导出。');
     } catch (e) { if (propagate) throw e; notify(errorText(e)); }
   }
-  async function downloadKnowledge() {
+  async function downloadKnowledge(cardsOnly = false) {
     const bridge = desktop()?.knowledge;
     if (!bridge) return;
     const { cards } = await bridge.list();
     const references = localDocumentReferences(current.current);
     const exported = await exportKnowledgeCards(cards, references, file => library.index.fingerprint(file, getDocumentBytes));
-    downloadJson(new Blob([JSON.stringify(exported, null, 2)], { type: 'application/json' }), 'ai-paper-pdf-reader-knowledge-' + new Date().toISOString().slice(0, 10) + '.json');
+    const data = cardsOnly ? exported : {format:'ai4u-knowledge-v1',knowledge:{cards:exported,wiki:await wikiRepository?.exportHistory() ?? []}};
+    const blob = new Blob([JSON.stringify(data)],{type:'application/json'});
+    if (blob.size > 350_000_000) throw new Error('知识库超过单份备份大小上限。');
+    downloadJson(blob,'ai4u-'+(cardsOnly?'cards-':'wiki-')+new Date().toISOString().slice(0,10)+'.json');
   }
-  async function importKnowledgeBackup(text: string) {
-    // A card file is a JSON array. Workspace backups begin with a JSON object.
-    if (!text.trimStart().startsWith('[')) return false;
-    const { added, skipped } = await knowledge.importCards(text);
+  async function importKnowledgeBackup(data: unknown) {
+    if (data && typeof data==='object' && 'format' in data && data.format==='ai4u-knowledge-v1') {
+      if (!('knowledge' in data) || !data.knowledge) throw new Error('知识库备份不完整。');
+      await restoreKnowledge(data.knowledge);
+      await knowledge.reload(); invalidateCheckpoint(); notify('Wiki 与知识卡片已恢复。'); return true;
+    }
+    if (!Array.isArray(data)) return false;
+    const { added, skipped } = await knowledge.importCards(JSON.stringify(data));
     notify(t('知识库已导入。新增 {0} 张，跳过 {1} 张已有卡片。', [added, skipped]));
     return true;
   }
@@ -1393,12 +1448,12 @@ export default function App() {
     fileOperation.current = true; setFileBusy(true);
     try {
       if (file.size > 350_000_000) throw new Error('备份超过 350 MB，请选择较小的备份文件。');
-      const text = await file.text();
-      if (await importKnowledgeBackup(text)) return;
+      const data = parseBackupData(await file.text());
+      if (await importKnowledgeBackup(data)) return;
       const snapshot = current.current!;
-      const merged = await importWorkspaceWithFiles(text, snapshot);
+      const merged = await importWorkspaceWithFiles(data, snapshot);
       if (current.current !== snapshot) throw new Error('对话在导入时发生变化，请重新导入。');
-      update(() => merged); library.refresh();
+      update(() => merged); await knowledge.reload(); library.refresh();
       clearReaderDocument(); setProjectPreviews(new Map()); setSidebarOpen(false);
       if (view.kind !== 'home') setView({ kind: 'workspace', pane: { kind: 'chat', conversationId: merged.activeConversationId } });
       notify('已导入为新对话，附件和原有记录完整保留。');
@@ -1546,15 +1601,16 @@ export default function App() {
     if (fileOperation.current || mainRequest.current || annotationRequests.current.size) throw new Error('请先停止回答，等待文件处理完成后再恢复。');
     fileOperation.current = true; setFileBusy(true);
     try {
-      if (await importKnowledgeBackup(text)) return;
-      if (loadError) await recover(text);
+      const data=parseBackupData(text);
+      if (await importKnowledgeBackup(data)) return;
+      if (loadError) await recover(data);
       else {
         const snapshot = current.current!;
-        const merged = await importWorkspaceWithFiles(text, snapshot);
+        const merged = await importWorkspaceWithFiles(data, snapshot);
         if (current.current !== snapshot) throw new Error('对话在恢复时发生变化，请重试。');
         update(() => merged); await flush();
       }
-      library.refresh(); clearReaderDocument(); setProjectPreviews(new Map()); setSidebarOpen(false);
+      await knowledge.reload(); library.refresh(); clearReaderDocument(); setProjectPreviews(new Map()); setSidebarOpen(false);
       if (view.kind !== 'home' && current.current) setView({ kind: 'workspace', pane: { kind: 'chat', conversationId: current.current.activeConversationId } });
       notify('备份已恢复，附件和批注可以继续使用。');
     } finally { fileOperation.current = false; setFileBusy(false); }
@@ -1595,8 +1651,8 @@ export default function App() {
   if (!workspace || !active) return <div className="loading-screen"><BrandLogo size={52} /><h1>{__APP_NAME__}</h1><p>{t(loadError || t("正在打开你的阅读空间…"))}</p>{loadError && <div className="recovery-toolbar"><button onClick={() => setRecoveryOpen(true)} className="primary-button">{t("从备份恢复")}</button><button onClick={() => location.reload()} className="secondary-button">{t("重新打开")}</button></div>}{recoveryDialog}</div>;
   if (wikiOpen && wikiRepository) return <>
     <Suspense fallback={<div className="loading-screen"><BrandLogo size={44} /><p>{t('正在打开个人知识库…')}</p></div>}>
-      <WikiWorkspace workspace={workspace} cards={knowledge.cards} repository={wikiRepository} resumeId={wikiResume}
-        onRemember={setWikiResume} flushRef={wikiFlush} onExit={() => setWikiOpen(false)} onOpenSource={openWikiSource}
+      <WikiWorkspace workspace={workspace} cards={knowledge.cards} repository={wikiRepository} resumeId={wikiResume} incoming={wikiMaterial}
+        onChanged={invalidateCheckpoint} onRemember={setWikiResume} flushRef={wikiFlush} onExit={() => setWikiOpen(false)} onOpenSource={openWikiSource}
         onLegacy={knowledge.available ? () => { setWikiOpen(false); openKnowledge(); } : undefined} />
     </Suspense>
     {closing && <div className="closing-overlay" role="status">{t('正在保存并关闭…')}</div>}
@@ -1619,7 +1675,7 @@ export default function App() {
     {readerSplit && preview && pane && <SplitDocumentTabs key={previewScope} preview={preview} documents={panelDocuments} disabled={fileBusy || turnBusy || closing}
       onOpen={ref => { if (!fileOperation.current && !closingRef.current) openReaderReference(ref, 'split', pane); }} onClose={closeDocumentTab} />}
     <div className="document-pane-body" id={readerSplit ? SPLIT_READER_PANEL_ID : undefined} role={readerSplit ? 'tabpanel' : undefined} aria-label={readerSplit ? openDocument.name : undefined}>
-      <DocumentReader key={openDocument.id} source={openDocument} conversationId={readerOwner.id} focused={readerFocused}
+      <DocumentReader key={openDocument.id} source={openDocument} conversationId={readerOwner.id} focused={readerFocused} onPdfChange={setReaderPdf}
         onReferenceToChat={(id, childId) => referenceAnnotationToChat(id, openDocument.id, childId)}
         modelSettings={settings} onFigureAsk={(id, image, profileId) => void askAnnotation(readerOwner.id, id, { image, profileId })}
         onFigureStrokes={(id, strokes) => { try { mutateConversation(readerOwner.id, c => updateFigureStrokes(c, id, strokes)); } catch (error) { notify(errorText(error)); } }}
@@ -1637,7 +1693,12 @@ export default function App() {
     </div>
   </div> : null;
   return <AnnotationActions.Provider value={{
-    sourceDocument, openSource:(annotation,report,id)=>{
+    toWiki: wikiRepository ? (ownerId,messageId,versionId,selection,note,childId) => {
+      const owner=current.current && findConversation(current.current,ownerId);
+      const material=owner && selectedWikiMaterial(owner,messageId,versionId,selection,note,childId);
+      if (material) showWiki(material);
+    } : undefined,
+    readerPdf, sourceDocument, openSource:(annotation,report,id)=>{
       const doc=sourceDocument(annotation,report);
       const sourceHit=doc && evidenceSearchHit(doc,report,id);
       if (!doc || !sourceHit) {notify('这条来源无法在原文版本中定位。');return;}
@@ -1837,6 +1898,7 @@ function ChatFileChip({ file, disabled, onOpen }: { file: DocumentAttachment; di
 
 export function ChatView(props: ChatViewProps) {
   useLocale();
+  const wikiActions=useContext(AnnotationActions);
   const { conversation, settings, isRunning, globallyBusy } = props;
   const projectChat = Boolean(conversation.projectId);
   const [searchMode, setSearchMode] = useState<ChatSearchMode>('local');
@@ -2045,7 +2107,8 @@ export function ChatView(props: ChatViewProps) {
                   {props.onReadingSources && Boolean(props.researchSources?.length || conversation.documents?.length) && <button type="button" className="document-tool-button" disabled={globallyBusy} onClick={props.onReadingSources}><BookOpen size={15} />{t('选资料精读')}</button>}
                 </div>}
                 <footer className="answer-actions">
-                  {props.knowledge && version.status === 'complete' && <button type="button" onClick={() => props.knowledge?.saveAnswer(message.id, version.id)}><BookmarkPlus size={14} />{t('存入知识库')}</button>}
+                  {wikiActions?.toWiki && version.status==='complete' && <button type="button" onClick={()=>wikiActions.toWiki?.(conversation.id,message.id,version.id)}><BookOpenText size={14}/>{t('整理到 Wiki')}</button>}
+                  {props.knowledge && version.status === 'complete' && <button type="button" onClick={() => props.knowledge?.saveAnswer(message.id, version.id)}><BookmarkPlus size={14} />{t('存为知识卡片')}</button>}
                   <button type="button" disabled={deleteDisabled} aria-label={t('删除本轮对话')} onClick={() => setDeletingMessage(message.id)}><Trash2 size={14} />{t('删除本轮')}</button>
                   {index === conversation.messages.length - 1 && <button disabled={globallyBusy || Boolean(message.inquiryIntro && props.modelSwitchDisabled)} onClick={() => props.onRegenerate(message.id)}><RefreshCw size={14} />{message.inquiryIntro ? t('重新生成导读') : version.status === 'error' || version.status === 'interrupted' ? t('重试这次回答') : t('重新生成')}</button>}
                   {message.versions.length > 1 && <div className="version-control"><button className="icon-button" aria-label={t("查看上一个回答版本")} disabled={globallyBusy || versionIndex === 0} onClick={() => props.onVersion(message.id, message.versions[versionIndex - 1].id)}><ChevronLeft size={15} /></button><span>{t("版本")}{versionIndex + 1} / {message.versions.length}</span><button className="icon-button" aria-label={t("查看下一个回答版本")} disabled={globallyBusy || versionIndex === message.versions.length - 1} onClick={() => props.onVersion(message.id, message.versions[versionIndex + 1].id)}><ChevronRight size={15} /></button></div>}

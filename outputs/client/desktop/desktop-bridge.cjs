@@ -34,9 +34,13 @@ function installDesktopBridge({ ipcMain, window, isLocalPage, backupStore, knowl
     if (!trusted(event)) throw new Error('此页面无法访问本机知识库。');
     return knowledgeStore[action](value);
   });
-  const wikiActions = wikiStore ? ['list', 'save', 'history', 'revision', 'restore'] : [];
+  const wikiActions = wikiStore ? ['list', 'save', 'history', 'revision', 'restore', 'exportHistory', 'importHistory'] : [];
   for (const action of wikiActions) ipcMain.handle(`learn:wiki-${action}`, (event, value) => {
     if (!trusted(event)) throw new Error('此页面无法访问个人知识库。');
+    if (action === 'importHistory') {
+      if (value.cards !== undefined) require('./knowledge-store.cjs').parseCards(value.cards);
+      return wikiStore.importHistory(value.pages);
+    }
     return wikiStore[action](value);
   });
   ipcMain.handle('learn:capture-ebook-selection', async (event, rect) => {

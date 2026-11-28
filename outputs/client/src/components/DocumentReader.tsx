@@ -17,6 +17,7 @@ import { markReaderSearch } from '../adapters/reader-search';
 import { useReferenceHighlight } from '../hooks/useReferenceHighlight';
 import { readerAnnotationRange } from '../adapters/reader-location';
 import { getDocumentBytes } from '../adapters/storage';
+import type { OpenReaderPdf } from '../adapters/pdf-excerpt';
 import { loadReaderPosition, saveReaderPosition } from '../adapters/reader';
 import { colorLuminance, readerTheme } from '../domain/reader';
 import type { ReaderAppearance } from '../domain/reader';
@@ -42,6 +43,7 @@ const PaperExperiment = lazy(() => import('./experiment/PaperExperiment'));
 export type ReaderPageJump = { documentId: string; pageNumber: number; annotationId?: string; sourceHit?:{hit:SearchHit;query:string}; bbox?: [number, number, number, number] };
 
 export interface DocumentReaderProps extends Omit<AnnotatedAnswerProps, 'messageId' | 'version' | 'plainText' | 'content' | 'contentReadyKey' | 'contentClassName'> {
+  onPdfChange?: (reader: OpenReaderPdf | null) => void;
   modelSettings?: ModelSettings;
   onDismissFigure: () => void;
   onFigureAsk?: (id: string, image: PreparedFigureImage, profileId?: string | null) => void;
@@ -64,10 +66,10 @@ const ReaderPageSlot = memo(function ReaderPageSlot({ index, number, width, heig
   return <div ref={element => register(index, element)} data-reader-page={index} className="reader-page-slot" style={{ width }}><p className="reader-page-label">{t('第 {0} 页', [number])}{empty ? t(' · 无可提取文字，暂不支持 OCR') : ''}</p><div className="reader-page-body" style={{ width, height }}>{children || <div className="reader-page-placeholder" aria-label={t('第 {0} 页，滚动到此处时显示', [number])} />}</div></div>;
 });
 
-function PdfDocumentReader({ source, onClose, focused, onToggleFocus, modelLabel, onOpenModelSettings, onBackup, onOpenFile, onOpenKnowledge, onOpenWiki, appearance, appearanceSaved, onAppearance, contextMode, onContextMode, onLocation, pageJump, onPageJumped, modelSettings, onDismissFigure, onFigureAsk, onFigureStrokes, projectReturn, ...baseAnnotationProps }: DocumentReaderProps) {
+function PdfDocumentReader({ source, onClose, focused, onToggleFocus, modelLabel, onOpenModelSettings, onBackup, onOpenFile, onOpenKnowledge, onOpenWiki, appearance, appearanceSaved, onAppearance, contextMode, onContextMode, onLocation, pageJump, onPageJumped, modelSettings, onDismissFigure, onFigureAsk, onFigureStrokes, onPdfChange, projectReturn, ...baseAnnotationProps }: DocumentReaderProps) {
   useLocale();
   const [experiment, setExperiment] = useState<{ page: number; selection?: PaperSelection } | null>(null);
-  const canExperiment = source.kind === 'pdf' && !!modelSettings && !baseAnnotationProps.disabled;
+  const canExperiment = import.meta.env.DEV && source.kind === 'pdf' && !!modelSettings && !baseAnnotationProps.disabled;
   const captureExperiment: NonNullable<AnnotatedAnswerProps['onExperimentSelection']> = useCallback((messageId, versionId, selector) => {
     const page = source.pages.find(p => p.messageId === messageId && p.versionId === versionId);
     if (page) setExperiment({ page: page.pageNumber, selection: { page: page.pageNumber, messageId, versionId, quote: selector.quote, start: selector.start, end: selector.end } });
@@ -346,11 +348,11 @@ function PdfDocumentReader({ source, onClose, focused, onToggleFocus, modelLabel
       const bytes = await getDocumentBytes(source.id); if (cancelled) return;
       if (!bytes) throw new Error('Missing document'); opened = await loadPdfDocument(bytes, controller.signal);
       if (cancelled) { await opened.loadingTask.destroy(); return; }
-      setPdf(opened); setLoading(false);
+      setPdf(opened); setLoading(false); onPdfChange?.({ documentId: source.id, pdf: opened });
     };
     void load().catch(() => { if (!cancelled) { setLoading(false); setFileError('无法打开本地原文件，仍可在“可批注文本”里阅读已保存的文字。'); } });
-    return () => { cancelled = true; controller.abort(); if (opened) { releasePdfDocument(opened); void opened.loadingTask.destroy().catch(() => {}); } };
-  }, [source.id, source.kind]);
+    return () => { cancelled = true; controller.abort(); onPdfChange?.(null); if (opened) { releasePdfDocument(opened); void opened.loadingTask.destroy().catch(() => {}); } };
+  }, [source.id, source.kind, onPdfChange]);
   useEffect(() => {
     if (!pdf) return;
     const controller = new AbortController(); setOutlineLoading(true);

@@ -22,7 +22,6 @@ export interface ReaderIndex {
   pages: Map<number, SourceBlock[]>;
   missingPages: number;
 }
-export type ReadingTask = 'local' | 'forward' | 'backward' | 'overview';
 const cache = new BoundedCache<DocumentAttachment, ReaderIndex>(16 * 1024 * 1024, 4);
 const names: Record<string,string> = { lemma:'Lemma', theorem:'Theorem', proposition:'Proposition', definition:'Def', corollary:'Corollary', claim:'Claim', 引理:'Lemma', 定理:'Theorem', 定义:'Def', 命题:'Proposition', 推论:'Corollary' };
 const heading = /^(definition|lemma|theorem|proposition|corollary|claim|定义|引理|定理|命题|推论)\s*(\d+(?:\.\d+)*)(?=\s*[.:(（：。]|$)/iu;
@@ -120,20 +119,6 @@ export function warmReaderIndex(document:DocumentAttachment) {
   return ()=>{clearTimeout(timer);partial.delete(document);};
 }
 
-export function readingTask(question: string, focus?: SourceBlock): ReadingTask {
-  if (/只(?:想知道|解释|说明|看).{0,12}(?:选中|这句话|这段话|字面)|\bjust explain\b/iu.test(question)) return 'local';
-  if (/全文|全篇|整篇|整本|总结全|概述全文|summari[sz]e (?:the |this )?(?:entire |whole )?(?:paper|book)|whole (?:paper|article)/iu.test(question)
-      && !/用到|用过|使用|代入|应用|used|appl/iu.test(question)) return 'overview';
-  if (/后[文面续]|下文|哪里.*(?:用|代入)|何处.*用|在哪.*用|为何引入|为什么.*引入|再.{0,4}(?:用到|使用)|used|later|downstream|where.*appl|introduced/iu.test(question)) return 'forward';
-  const askingWhere=/(?:哪[一几]?(?:步|行|里|儿|个等号|个不等式)|何处|卡在|从哪|原文在哪|推不[动下]|\b(?:where|which (?:line|step|equality|inequality))\b)/iu.test(question);
-  const dependency=/(?:靠|用|需要|代[进去入]|依赖|拿掉|去掉|少了|没有|照搬|这个定义|这个条件|这条|这个量|冒出来|\b(?:uses?|needs?|requires?|without|appl\w*|depend\w*)\b)/iu.test(question);
-  const proofGoal=/(?:证明|推算|定理|引理|命题|收敛|推不|\b(?:proof|theorem|lemma|proposition|derivation)\b)/iu.test(question);
-  const declaration=focus && /^(?:Def |Lemma |Theorem |Proposition |Corollary )/u.test(focus.label);
-  if (askingWhere && (proofGoal || declaration && dependency)) return 'forward';
-  if (/等[式号]|上式|下式|依据|假设|前提|推导|根据|由来|为什么成立|为何成立|derive|derivation|which (?:lemma|assumption)|why.*(?:equal|hold)|follows? from/iu.test(question)) return 'backward';
-  return 'local';
-}
-
 export function evidenceSearchHit(document:DocumentAttachment, report:ReaderReport, id:string) {
   const index=readerIndex(document), block=index.byId.get(id);
   if (!block || document.id!==report.documentId || index.version!==report.documentVersion ||
@@ -171,17 +156,18 @@ export function selectedBlocks(index: ReaderIndex, page: number, quote: string, 
   return list.filter((_,i)=>{const previous=cursor; cursor+=folded[i].length; return previous<at+term.length && cursor>at;});
 }
 
-export function findEvidence(index: ReaderIndex, focus: SourceBlock | undefined, quote: string, question: string, task: ReadingTask): ReaderEvidence[] {
-  if (!focus || task==='overview') return [];
-  const {blocks} = index;
-  if (task==='forward') {
-    return readerProofSteps(blocks,focus,quote,question,index.version);
-  }
-  const i = blocks.indexOf(focus);
-  const hits = rankPointerCandidates(blocks,focus.anchor,quote+' '+question,quote);
-  const earlier = hits.filter(h=>h.index<i && (h.explicit || (task==='backward' && /^(?:Def|Lemma|Theorem|Eq) /u.test(blocks[h.index].label) && h.score>=2)));
-  return earlier.slice(0, task==='backward'? 3 : 1).map(hit=>{
-    const target = blocks[hit.index], next = blocks[hit.index+1];
-    return {target,blocks:next && next.page===target.page && /^Eq /u.test(next.label) ? [target,next] : [target]};
-  });
+export function findEvidence(index: ReaderIndex, focus: SourceBlock | undefined, quote: string, question: string, direction?: 'forward'): (ReaderEvidence & {use:'condition'|'proof'|'expanded'})[] {
+  if (!focus) return [];
+  const { blocks } = index;
+  const proof = readerProofSteps(blocks, focus, quote, question, index.version).map(hit => ({...hit, use:'proof' as const}));
+  if (direction === 'forward') return proof;
+  const pivot = blocks.indexOf(focus);
+  const ranked = rankPointerCandidates(blocks, focus.anchor, quote + ' ' + question, quote);
+  const earlier = ranked.filter(hit => hit.index < pivot).slice(0, 2);
+  const later = ranked.filter(hit => hit.index > pivot && !proof.some(p => p.target === blocks[hit.index])).slice(0, Math.max(0, 2 - proof.length));
+  return [...proof, ...[...earlier, ...later].map(hit => {
+    const target = blocks[hit.index], next = blocks[hit.index + 1];
+    const neighbors = next?.page === target.page && /^Eq /u.test(next.label) ? [target,next] : [target];
+    return { target, blocks:neighbors, use:hit.index < pivot ? 'condition' as const : 'expanded' as const };
+  })];
 }

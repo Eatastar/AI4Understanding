@@ -18,6 +18,7 @@ interface WikiNavigation {
   records: ReadonlyMap<string, WikiRecord>;
   openEntry: (id: string, blockId?: string) => void;
   openCitation: (citation: SourceCitation) => void;
+  hasSource: (citation: SourceCitation) => boolean;
 }
 export const WikiNavigation = createContext<WikiNavigation | null>(null);
 
@@ -37,10 +38,11 @@ function WikiLinkView({ node }: ReactNodeViewProps<HTMLElement>) {
 function CitationView({ node }: ReactNodeViewProps<HTMLElement>) {
   const navigation = useContext(WikiNavigation);
   const citation = node.attrs as SourceCitation;
+  const available = navigation?.hasSource(citation) ?? true;
   return <NodeViewWrapper as="span" className="wiki-inline-node" contentEditable={false}>
     <button type="button" className="wiki-source-cite" title={citation.label}
       aria-label={t('打开引用出处 {0}', [citation.label])} onClick={() => navigation?.openCitation(citation)}>
-      <FileText size={12} aria-hidden="true" /><span>{citation.label}</span>
+      <FileText size={12} aria-hidden="true" /><span>{citation.label}</span>{!available && <small>{t('来源暂不可用')}</small>}
     </button>
   </NodeViewWrapper>;
 }

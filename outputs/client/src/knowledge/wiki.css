@@ -175,4 +175,7 @@
   .wiki-page-heading { padding-block-start: 20px; }
   .wiki-entry-row > time { display: none; }
 }
+.wiki-ai-source { display: flex; align-items: center; gap: 6px; margin-block: 6px; font-size: .88em; }
+.wiki-ai-edit .wiki-muted { overflow-wrap: anywhere; max-height: 6em; overflow: auto; }
+.wiki-reference-card[data-current] { border-color: var(--wiki-focus); }
 @media (prefers-reduced-motion: reduce) { .wiki-reference-panel { transition: none; } }

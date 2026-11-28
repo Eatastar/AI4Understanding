@@ -35,6 +35,7 @@ export interface ReferenceLocator {
   subAnnotationId?: string;
   page?: number;
   bbox?: [number, number, number, number];
+  start?: number;
   quote?: string;
   url?: string;
 }
@@ -65,6 +66,8 @@ export interface WikiRevisionKey { id: string; revision: number }
 export interface WikiSaveRequest { id?: string; expectedRevision: number; draft: WikiDraft }
 
 export interface WikiRepository {
+  exportHistory: () => Promise<WikiPage[]>;
+  importHistory: (pages: WikiPage[], cards?: string) => Promise<number>;
   list: () => Promise<WikiRecord[]>;
   save: (request: WikiSaveRequest) => Promise<WikiRecord>;
   history: (id: string) => Promise<WikiRevision[]>;

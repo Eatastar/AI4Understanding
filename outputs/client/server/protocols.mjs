@@ -1,4 +1,4 @@
-import { imageMessages } from './vision.mjs';
+import { imageMessages, rejectedImageModality } from './vision.mjs';
 /** Native transports. Keys and untrusted provider messages never enter Error.message. */
 export class ProtocolError extends Error {
   constructor(code, { statusCode, responseBody, upstreamError } = {}) {
@@ -11,7 +11,7 @@ export class ProtocolError extends Error {
   }
 }
 
-import { checkReaderBudget } from '../shared/reader-budget.mjs';
+import { checkReaderBudget, selectionImageReserve } from '../shared/reader-budget.mjs';
 
 export function endpointURL(baseURL, resource) {
   let url;
@@ -220,15 +220,36 @@ export async function streamProtocolReply({ apiFormat, baseURL, model, apiKey = 
   if (!Array.isArray(messages) || messages.some(message => !message || !['system', 'user', 'assistant'].includes(message.role) || typeof message.content !== 'string')) throw new ProtocolError('invalid_messages');
   const sampling = experiment?.temperature === 0.2 ? { temperature: 0.2 } : {};
   const transport=customFetch || globalThis.fetch;
-  let readerEstimate;
+  let readerEstimate, readerImage, emitted=false;
   const fetcher=reader ? async (url, init) => {
-    try { readerEstimate=checkReaderBudget(JSON.parse(init.body),reader,{baseURL,model,apiFormat}).estimate; }
+    try {
+      const wire=JSON.parse(init.body);
+      const last=(wire.input ?? wire.messages).findLast(m=>m.role==='user');
+      // imageMessages attaches a single validated inline image to the final user turn.
+      // Estimate its pixels separately from its base64 transport encoding.
+      const textPart=Array.isArray(last?.content) && last.content.find(p=>p.type==='input_text' || p.type==='text');
+      if (image && textPart) last.content=textPart.text;
+      readerEstimate=checkReaderBudget(wire,reader,{baseURL,model,apiFormat}).estimate;
+      if (image && textPart) {
+        const reserve=selectionImageReserve(image.width,image.height);
+        if (reader.maxUSD!==undefined || readerEstimate+reserve>reader.inputCap) {
+          readerImage='budget'; init={...init,body:JSON.stringify(wire)};
+        } else { readerImage='sent'; readerEstimate+=reserve; }
+      }
+    }
     catch (error) { error.code='reader_budget'; throw error; }
     return transport(url,init);
   } : transport;
-  const options = { baseURL, model, apiKey, messages, image, systemInstruction, signal, fetcher, onText, experiment, sampling, reader };
-  const result=await (apiFormat === 'openai-chat' ? openAIChat(options) : apiFormat === 'openai-responses' ? openAIResponses(options) : anthropicMessages(options));
-  return reader ? {...result,readerEstimate} : result;
+  const options = { baseURL, model, apiKey, messages, image, systemInstruction, signal, fetcher, onText: chunk=>{emitted=true;return onText(chunk);}, experiment, sampling, reader };
+  const send=apiFormat === 'openai-chat' ? openAIChat : apiFormat === 'openai-responses' ? openAIResponses : anthropicMessages;
+  let result;
+  try { result=await send(options); }
+  catch(error) {
+    if (readerImage!=='sent' || emitted || signal?.aborted || !rejectedImageModality(error)) throw error;
+    readerImage='unsupported';
+    result=await send({...options,image:undefined});
+  }
+  return reader ? {...result,readerEstimate,...(readerImage?{readerImage}:{})} : result;
 }
 
 async function openAIChat({ baseURL, model, apiKey, messages, image, systemInstruction, signal, fetcher, onText, experiment, sampling, reader }) {

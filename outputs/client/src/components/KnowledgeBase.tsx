@@ -148,7 +148,7 @@ export function KnowledgeCardEditor({ draft, project, disabled, onClose, onSave 
     }
   }
 
-  return <KnowledgeDialog title={t(draft.id ? '编辑知识卡片' : '存入知识库')} busy={saving} onClose={onClose} actions={<>
+  return <KnowledgeDialog title={t(draft.id ? '编辑知识卡片' : '存为知识卡片')} busy={saving} onClose={onClose} actions={<>
     <button type="button" className="secondary-button" disabled={saving} onClick={onClose}>{t('取消')}</button>
     <button type="submit" form={form} className="primary-button" {...confirmShortcut} disabled={!canSave}>{t(saving ? '正在保存…' : '保存')}</button>
   </>}>

@@ -1,5 +1,5 @@
 const fs = require('node:fs/promises');
-const { randomUUID } = require('node:crypto');
+const { randomUUID, createHash } = require('node:crypto');
 const { join } = require('node:path');
 const { promisify } = require('node:util');
 const { gzip, gunzip } = require('node:zlib');
@@ -37,6 +37,7 @@ function cleanLocator(value) {
   for (const key of ['documentId', 'conversationId', 'messageId', 'versionId', 'annotationId', 'subAnnotationId']) {
     if (raw[key] !== undefined) locator[key] = text(raw[key], 512);
   }
+  if (raw.start !== undefined) locator.start = integer(raw.start);
   if (raw.page !== undefined) locator.page = integer(raw.page, 1);
   if (raw.quote !== undefined) locator.quote = text(raw.quote, MAX_TEXT);
   if (raw.bbox !== undefined) {
@@ -214,7 +215,87 @@ function createWikiStore({ directory, io = fs, now = Date.now }) {
     }
     return withLinks(page);
   }
+  async function exportHistory() {
+    const history = [];
+    for (const dir of await entries(pages)) {
+      if (!dir.isDirectory() || !pageIdPattern.test(dir.name)) continue;
+      for (const version of (await versions(dir.name)).reverse()) history.push(await read(dir.name, version));
+    }
+    return history;
+  }
+  async function importHistory(raw) {
+    if (!Array.isArray(raw)) throw invalid();
+    const groups = new Map();
+    for (const item of raw) {
+      const id = pageId(object(item).id);
+      const page = { id, ...cleanDraft(item, false), revision: integer(item.revision, 1),
+        createdAt: integer(item.createdAt), updatedAt: integer(item.updatedAt) };
+      const revisions = groups.get(id) ?? [];
+      revisions.push(page); groups.set(id, revisions);
+    }
+    const existing = new Set();
+    let conflict = false;
+    for (const [id, revisions] of groups) {
+      revisions.sort((a,b) => a.revision - b.revision);
+      if (revisions.some((p,i) => p.revision !== i + 1 || p.createdAt !== revisions[0].createdAt || p.updatedAt < (revisions[i-1]?.updatedAt ?? p.createdAt))) throw invalid();
+      const local = await versions(id);
+      if (!local.length) continue;
+      existing.add(id);
+      for (const page of revisions) {
+        const previous = local.find(v => v.revision === page.revision);
+        if (!previous || JSON.stringify(await read(id, previous)) !== JSON.stringify(page)) { conflict = true; break; }
+      }
+    }
+    const copies = new Map();
+    if (conflict) {
+      const digest = createHash('sha256');
+      for (const id of [...groups.keys()].sort()) digest.update(JSON.stringify(groups.get(id)));
+      const stamp = digest.digest('hex');
+      // A conflict forks the whole imported set so internal links and repeated imports stay stable.
+      for (const id of groups.keys()) {
+        const hex = createHash('sha256').update(stamp + id).digest('hex').slice(0,32);
+        copies.set(id, 'wiki_' + [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-'));
+      }
+    }
+    function mapLinks(node) {
+      if (node.type === 'wikiLink' && copies.has(node.attrs.pageId)) node.attrs.pageId = copies.get(node.attrs.pageId);
+      for (const child of node.content ?? []) mapLinks(child);
+    }
+    await io.mkdir(pages, { recursive: true });
+    const staged = [], published = [];
+    try {
+      for (const [id, revisions] of groups) {
+        if (!conflict && existing.has(id)) continue;
+        const target = copies.get(id) ?? id;
+        for (const page of revisions) { page.id = target; mapLinks(page.body); }
+        const local = await versions(target);
+        if (local.length) {
+          for (const page of revisions) {
+            const old = local.find(v => v.revision === page.revision);
+            if (!old || JSON.stringify(await read(target, old)) !== JSON.stringify(page)) throw new Error('本地条目已有其他修订，原有内容已保留。');
+          }
+          continue;
+        }
+        const temp = await io.mkdtemp(join(pages, '.import-'));
+        staged.push({ temp, destination: join(pages, target) });
+        for (const page of revisions) {
+          const bytes = Buffer.from(JSON.stringify({schemaVersion: 1, ...page}));
+          if (bytes.length > MAX_BYTES) throw invalid();
+          await io.writeFile(join(temp, 'r' + page.revision + '-' + page.updatedAt + '.json.gz'), await compress(bytes), { flag: 'wx', mode: 0o600 });
+        }
+      }
+      for (const item of staged) { await io.rename(item.temp, item.destination); published.push(item); }
+      return staged.length;
+    } catch (error) {
+      for (const item of published.reverse()) await io.rename(item.destination, item.temp);
+      throw error;
+    } finally {
+      for (const item of staged) await io.rm(item.temp, { recursive: true, force: true });
+    }
+  }
   return {
+    exportHistory: () => serial(exportHistory),
+    importHistory: raw => serial(() => importHistory(raw)),
     list: () => serial(async () => {
       const records = [];
       for (const dir of await entries(pages)) {

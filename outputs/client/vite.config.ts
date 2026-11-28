@@ -7,6 +7,7 @@ const { productName, shortName, version, buildId, buildTime } = JSON.parse(readF
 export default defineConfig({
   plugins: [react()],
   define: {
+    'import.meta.env.VITE_BRAND_LOGO_URL': JSON.stringify('/assets/ai4u-logo.svg?v=' + buildId),
     __APP_NAME__: JSON.stringify(productName),
     __APP_SHORT_NAME__: JSON.stringify(shortName),
     __APP_VERSION__: JSON.stringify(version),

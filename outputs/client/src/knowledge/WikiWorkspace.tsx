@@ -7,26 +7,29 @@ import { t } from '../i18n/locale';
 import { useLocale } from '../i18n/react';
 import { WikiHome } from './WikiHome';
 import { WikiPageView, wikiError } from './WikiPageView';
-import type { SourceCitation, WikiRecord, WikiRepository } from './wiki-types';
+import type { ReferenceItem, SourceCitation, WikiRecord, WikiRepository } from './wiki-types';
 import './wiki.css';
 
-type Screen = { kind: 'home' } | { kind: 'page'; id?: string; blockId?: string; key: number };
+type Screen = { kind: 'home' } | { kind: 'page'; material?: ReferenceItem; id?: string; blockId?: string; key: number };
 interface Props {
   workspace: Workspace;
   cards: readonly KnowledgeCard[];
   repository: WikiRepository;
   resumeId?: string;
+  incoming?: ReferenceItem;
   onRemember: (id?: string) => void;
   flushRef: RefObject<(() => Promise<void>) | null>;
   onExit: () => void;
+  onChanged: () => void;
   onLegacy?: () => void;
   onOpenSource: (citation: SourceCitation) => Promise<boolean> | boolean;
 }
 
-export default function WikiWorkspace({ workspace, cards, repository, resumeId, onRemember, flushRef, onExit, onLegacy, onOpenSource }: Props) {
+export default function WikiWorkspace({ workspace, cards, repository, resumeId, incoming, onRemember, flushRef, onExit, onChanged, onLegacy, onOpenSource }: Props) {
   useLocale();
   const [records, setRecords] = useState<WikiRecord[]>();
-  const [screen, setScreen] = useState<Screen>(() => resumeId ? { kind: 'page', id: resumeId, key: 0 } : { kind: 'home' });
+  const [screen, setScreen] = useState<Screen>(() => resumeId && !incoming ? { kind: 'page', id: resumeId, key: 0 } : { kind: 'home' });
+  const [pendingMaterial,setPendingMaterial] = useState(incoming);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const serial = useRef(0);
@@ -50,13 +53,15 @@ export default function WikiWorkspace({ workspace, cards, repository, resumeId, 
     catch (failure) { setError(wikiError(failure)); }
     finally { pending.current = false; setNavigating(false); }
   };
-  const openEntry = (id: string, blockId?: string) => void transition(() => {
+  const openEntry = (id: string, blockId?: string, material?: ReferenceItem) => void transition(() => {
     if (!records?.some(record => record.page.id === id)) throw new Error('知识库条目已不存在。');
     onRemember(id);
-    setScreen({ kind: 'page', id, blockId, key: ++serial.current });
+    setScreen({ kind: 'page', id, blockId, material, key: ++serial.current });
+    setPendingMaterial(undefined);
   });
   const showHome = () => void transition(() => { onRemember(undefined); setScreen({ kind: 'home' }); });
   const update = (record: WikiRecord) => {
+    onChanged();
     setRecords(previous => [record, ...(previous ?? []).filter(item => item.page.id !== record.page.id)]);
     if (screen.kind === 'page' && !screen.id) {
       setScreen({ ...screen, id: record.page.id });
@@ -79,12 +84,12 @@ export default function WikiWorkspace({ workspace, cards, repository, resumeId, 
       {error && <div className="wiki-column wiki-load-error" role="alert"><p>{error}</p>
         {!records && <button type="button" className="wiki-action" onClick={() => { setError(''); setAttempt(value => value + 1); }}>{t('重新加载')}</button>}
       </div>}
-      {records && (article ? <WikiPageView key={screen.key} entry={entry} blockId={screen.blockId}
+      {records && (article ? <WikiPageView key={screen.key} entry={entry} blockId={screen.blockId} incoming={screen.material}
         records={records} workspace={workspace} cards={cards} repository={repository} flushRef={flushRef}
         onStore={update} onOpenEntry={openEntry} onOpenCitation={citation => void transition(async () => {
-          if (!await onOpenSource(citation)) throw new Error('本机找不到这份出处。');
-        })} /> : <WikiHome records={records} onOpen={openEntry}
-        onCreate={() => setScreen({ kind: 'page', key: ++serial.current })} />)}
+          if (!await onOpenSource(citation)) throw new Error('来源暂不可用。请导入包含原始资料的完整备份。');
+        })} /> : <WikiHome records={records} choosing={!!pendingMaterial} onOpen={id=>openEntry(id,undefined,pendingMaterial)}
+        onCreate={() => {setScreen({ kind: 'page', material:pendingMaterial, key: ++serial.current });setPendingMaterial(undefined);}} />)}
       {!records && !error && <p className="wiki-column wiki-muted wiki-loading" role="status">{t('正在打开个人知识库…')}</p>}
     </main>
   </section>;

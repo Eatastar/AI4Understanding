@@ -146,7 +146,7 @@ export function AnnotationAnswerBody({ answer, color, markers = noMarkers, openM
     } : undefined}>{answer}</MathMarkdown>}
     {enabled && selection && <button type="button" className="annotation-sub-selection" style={{ left: selection.left, top: selection.top }}
       onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }} onClick={addChild}>
-      <MessageSquarePlus size={13} />{t('子批注')}
+      <MessageSquarePlus size={13} />{t('追问这句话')}
     </button>}
     {choices && <SubAnnotationChoices choices={choices} markers={markers} onOpen={openHit} onClose={closeChoices} />}
   </div>;

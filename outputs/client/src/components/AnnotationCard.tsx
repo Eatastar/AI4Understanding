@@ -4,8 +4,10 @@ import { useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useStat
 import type { ReactNode, RefObject } from 'react';
 import { BookmarkPlus, Check, CornerDownLeft, GripHorizontal, ListPlus, LoaderCircle, MessageSquareQuote, Pencil, Plus, RotateCcw, Send, Square, Trash2, X } from 'lucide-react';
 import { MathMarkdown } from './MathMarkdown';
+import { SourceExcerpt } from './SourceExcerpt';
+import { selectionSourceStart } from '../adapters/pdf-excerpt';
 import { HighlightColorPicker } from './HighlightColorPicker';
-import type { Annotation } from '../domain/types';
+import type { Annotation, DocumentAttachment } from '../domain/types';
 import { canReferenceAnnotation } from '../domain/chat-references';
 import { AnnotationChatActions, AnnotationSummaries } from './AnnotationSummary';
 import { KnowledgeCardActions } from './KnowledgeBase';
@@ -29,6 +31,7 @@ interface AnnotationCardProps {
   onReferenceToChat?: (childId?: string) => void;
   disabled?: boolean;
   sourceContent?: ReactNode;
+  sourceDocument?: DocumentAttachment;
   requestControls?: ReactNode;
   requestDisabled?: boolean;
   headerActions?: ReactNode;
@@ -37,7 +40,7 @@ interface AnnotationCardProps {
   cardRef?: RefObject<HTMLElement | null>;
 }
 
-export function AnnotationCard({ annotation, onClose, onUpdate, onAsk, onStop, onReask, onDelete, onReferenceToChat, disabled, sourceContent, requestControls, requestDisabled, headerActions, slots, onSwitchSlot, cardRef }: AnnotationCardProps) {
+export function AnnotationCard({ annotation, onClose, onUpdate, onAsk, onStop, onReask, onDelete, onReferenceToChat, disabled, sourceContent, sourceDocument, requestControls, requestDisabled, headerActions, slots, onSwitchSlot, cardRef }: AnnotationCardProps) {
   useLocale();
   const chatActions = useContext(AnnotationChatActions);
   const saveKnowledge = useContext(KnowledgeCardActions);
@@ -168,7 +171,7 @@ export function AnnotationCard({ annotation, onClose, onUpdate, onAsk, onStop, o
           {sourceContent
             ? <span className="annotation-color-dot" style={{ background: annotation.color }} />
             : <HighlightColorPicker color={annotation.color} onChange={color => onUpdate({ color })} />}
-          <strong>{annotation.figure ? t("图片问答") : isDraft ? t("添加批注") : isNote ? t("批注") : reask ? t("重新提问") : t("批注问答")}</strong>
+          <strong>{annotation.figure ? t("图片问答") : isDraft ? t("问 AI") : isNote ? t("批注") : reask ? t("重新提问") : t("批注问答")}</strong>
         </div>
         <div className="annotation-card-header-actions">
           {slots && slotCount > 1 && <div className="annotation-slot-list" role="group" aria-label={t('同位置批注')}>
@@ -189,12 +192,12 @@ export function AnnotationCard({ annotation, onClose, onUpdate, onAsk, onStop, o
       </header>
 
       <div className="annotation-card-scroll" ref={scrollRef}>
-        {sourceContent || <AnnotationQuote key={annotation.id} quote={annotation.quote} color={annotation.color} />}
+        {sourceContent || <AnnotationQuote key={annotation.id} annotation={annotation} source={sourceDocument} />}
         {requestControls}
         {annotation.figure && annotation.modelLabel && <p className="figure-answer-model">{t('上次回答模型：{0}', [annotation.modelLabel])}</p>}
 
         {canChooseMode && <div className="annotation-mode-switch" role="group" aria-label={t("批注类型")}>
-          <button type="button" aria-pressed={!isNote} onClick={() => changeMode('ask')}>{t("询问 AI")}</button>
+          <button type="button" aria-pressed={!isNote} onClick={() => changeMode('ask')}>{t("问 AI")}</button>
           <button type="button" aria-pressed={isNote} onClick={() => changeMode('note')}>{t("只写批注")}</button>
         </div>}
 
@@ -285,19 +288,24 @@ export function AnnotationCard({ annotation, onClose, onUpdate, onAsk, onStop, o
         )}
         {!!annotation.summaries?.length && <AnnotationSummaries annotation={annotation} openTurn={chatActions?.openTurn} />}
       </div>
-      {canReferenceAnnotation(annotation) && (onReferenceToChat || chatActions?.collect || canSaveKnowledge) && <footer className="annotation-chat-action">
+      {canReferenceAnnotation(annotation) && (onReferenceToChat || chatActions?.collect || canSaveKnowledge || annotationActions?.toWiki) && <footer className="annotation-chat-action">
         {onReferenceToChat && <button type="button" className="annotation-text-button" disabled={disabled || isGenerating} onClick={() => { flushRef.current(); onReferenceToChat(); }}><MessageSquareQuote size={14} />{t('引用到聊天继续追问')}</button>}
         {chatActions?.collect && <button type="button" className="annotation-text-button" disabled={disabled || isGenerating} onClick={() => { flushRef.current(); chatActions.collect?.(annotation); }}><ListPlus size={14} />{t('整理到新会话')}</button>}
-        {canSaveKnowledge && <button type="button" className="annotation-text-button" disabled={disabled || isGenerating} onClick={() => { flushRef.current(); canSaveKnowledge(annotation); }}><BookmarkPlus size={14} />{t('存入知识库')}</button>}
+        {annotationActions?.toWiki && <button type="button" className="annotation-text-button" disabled={disabled || isGenerating} onClick={()=>{flushRef.current();annotationActions.toWiki?.(annotation.conversationId,annotation.messageId,annotation.versionId,undefined,annotation);}}>{t('整理到 Wiki')}</button>}
+        {canSaveKnowledge && <button type="button" className="annotation-text-button" disabled={disabled || isGenerating} onClick={() => { flushRef.current(); canSaveKnowledge(annotation); }}><BookmarkPlus size={14} />{t('存为知识卡片')}</button>}
       </footer>}
     </section>;
 }
 
-function AnnotationQuote({ quote, color }: { quote: string; color: string }) {
+function AnnotationQuote({ annotation, source }: { annotation: Annotation; source?: DocumentAttachment }) {
+  const { quote, color } = annotation;
+  const page = source?.pages.find(p => p.messageId === annotation.messageId && p.versionId === annotation.versionId);
+  const start = selectionSourceStart(annotation, page);
   const [expanded, setExpanded] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
   const id = useId();
   const quoteRef = useRef<HTMLQuoteElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const element = quoteRef.current;
@@ -305,12 +313,13 @@ function AnnotationQuote({ quote, color }: { quote: string; color: string }) {
     const measure = () => setOverflowing(element.scrollHeight > element.clientHeight + 1);
     const observer = new ResizeObserver(measure);
     observer.observe(element);
+    if (contentRef.current) observer.observe(contentRef.current);
     measure();
     return () => observer.disconnect();
   }, [quote, expanded]);
 
   return <div className="annotation-quote-block" style={{ borderColor: color }}>
-    <blockquote ref={quoteRef} id={id} className="annotation-quote" data-expanded={expanded}>{quote}</blockquote>
+    <blockquote ref={quoteRef} id={id} className="annotation-quote" data-expanded={expanded}><div ref={contentRef}><SourceExcerpt text={quote} document={source} page={page} start={start}/></div></blockquote>
     {(overflowing || expanded) && <button type="button" className="annotation-text-button" aria-controls={id} aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{t(expanded ? '收起' : '展开')}</button>}
   </div>;
 }

@@ -7,8 +7,8 @@ const HASH = /^[a-f0-9]{64}$/;
 function metadataFrom(text) {
   if (typeof text !== 'string' || Buffer.byteLength(text) > MAX_BYTES) throw new Error('备份格式无效。');
   let data; try { data = JSON.parse(text); } catch { throw new Error('备份格式无效。'); }
-  const legacy = data?.schemaVersion === 1 && Array.isArray(data.conversations) && data.conversations.length && Object.keys(data).every(key => ['schemaVersion', 'conversations', 'activeConversationId'].includes(key));
-  const compact = data?.schemaVersion === 2 && Array.isArray(data.conversationIds) && data.conversationIds.length && Array.isArray(data.records) && Object.keys(data).every(key => ['schemaVersion', 'conversationIds', 'activeConversationId', 'records'].includes(key));
+  const legacy = data?.schemaVersion === 1 && Array.isArray(data.conversations) && data.conversations.length && Object.keys(data).every(key => ['schemaVersion', 'conversations', 'activeConversationId', 'knowledge'].includes(key));
+  const compact = data?.schemaVersion === 2 && Array.isArray(data.conversationIds) && data.conversationIds.length && Array.isArray(data.records) && Object.keys(data).every(key => ['schemaVersion', 'conversationIds', 'activeConversationId', 'records', 'knowledge'].includes(key));
   if (!legacy && !compact) throw new Error('备份格式无效。');
   const attachments = legacy ? data.conversations.flatMap(item => item.documents || []) : data.records.filter(item => item.kind === 'document').map(item => item.data);
   const expected = new Map();

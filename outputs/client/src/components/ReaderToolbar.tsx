@@ -138,9 +138,9 @@ export function ReaderToolbar(props: Props) {
       <details className="reader-settings-more">
         <summary>{t("更多设置")}</summary>
         <div className="reader-setting-row"><span>{t("界面语言")}</span><LanguageSelector /></div>
-        <label className="reader-setting-row reader-context-setting"><span>{t("AI 资料范围")}</span><NativeSelect wrapperClassName="reader-context-select" aria-label={t("AI 资料范围")} value={props.contextMode} onChange={event => props.onContextMode(event.target.value as DocumentContextMode)}><option value="auto">{engine.enabled?t("自动：按问题选择原文"):t("自动：小文件全文，大文件按需引用")}</option><option value="relevant">{t("按需引用")}</option><option value="full">{t("全文")}</option></NativeSelect></label>
+        <label className="reader-setting-row reader-context-setting"><span>{t("AI 资料范围")}</span><NativeSelect wrapperClassName="reader-context-select" aria-label={t("AI 资料范围")} value={props.contextMode} onChange={event => props.onContextMode(event.target.value as DocumentContextMode)}><option value="auto">{t("自动：小文件全文，大文件按需引用")}</option><option value="relevant">{t("按需引用")}</option><option value="full">{t("全文")}</option></NativeSelect></label>
         <ReaderEngineOptions options={engine} onChange={setEngine}/>
-        {engine.enabled?<p className="reader-settings-help">{t('自动模式先查选区和原文。跨页证明缺少依据时，在预算内扩大范围。')}</p>:<><p className="reader-settings-help" role="status">{props.relevantContext ? t("当前文件：按需引用，发送选段、所在页和相关片段；不发送全文。") : t("当前文件：全文，发送全部提取文字；扫描图片暂不识别。")}</p>
+        {engine.enabled?<p className="reader-settings-help">{t('自动模式在预算内优先使用全文。长文献使用选区、邻段和相关原文。')}</p>:<><p className="reader-settings-help" role="status">{props.relevantContext ? t("当前文件：按需引用，发送选段、所在页和相关片段；不发送全文。") : t("当前文件：全文，发送全部提取文字；扫描图片暂不识别。")}</p>
         <p className="reader-settings-help">{t("自动模式：超过 25 MB、300 页或 12 万字符时按需引用，每份最多引用 2.4 万字符。全文模式仍受模型容量限制。")}</p></>}
       </details>
       <footer><span>{__APP_VERSION__} · {__APP_BUILD__}</span></footer>

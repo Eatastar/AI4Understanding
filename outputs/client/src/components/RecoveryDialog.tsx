@@ -10,7 +10,7 @@ import { NativeSelect } from './NativeSelect';
 export function RecoveryDialog({ recovery, onClose, onRestore, onCreate, onDeleted, onExport, onExportKnowledge }: {
   recovery: boolean; onClose: () => void; onRestore: (text: string) => Promise<void>;
   onCreate: () => Promise<void>; onDeleted?: () => void; onExport?: (legacy?: boolean, currentOnly?: boolean) => Promise<void>;
-  onExportKnowledge?: () => Promise<void>;
+  onExportKnowledge?: (cardsOnly?: boolean) => Promise<void>;
 }) {
   useLocale();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -19,7 +19,7 @@ export function RecoveryDialog({ recovery, onClose, onRestore, onCreate, onDelet
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState('');
   const [scope, setScope] = useState(onExport ? 'all' : 'knowledge');
-  const knowledgeScope = scope === 'knowledge' && Boolean(onExportKnowledge);
+  const knowledgeScope = (scope === 'knowledge' || scope === 'cards') && Boolean(onExportKnowledge);
   const [pendingDelete, setPendingDelete] = useState<LocalBackup>();
   const refresh = async () => { setEntries(await desktop()?.backups.list() || []); };
   const run = async (action: () => Promise<void>) => {
@@ -60,13 +60,13 @@ export function RecoveryDialog({ recovery, onClose, onRestore, onCreate, onDelet
     {(onExport || onExportKnowledge) && <label className="backup-scope"><span>{t("导出范围")}</span>
       <NativeSelect wrapperClassName="backup-scope-select" aria-label={t("备份导出范围")} value={scope} disabled={busy} onChange={event => setScope(event.target.value)}>
         {onExport && <><option value="all">{t("全部记录（含回收站）")}</option><option value="current">{t("当前对话")}</option></>}
-        {onExportKnowledge && <option value="knowledge">{t("知识库")}</option>}
+        {onExportKnowledge && <><option value="knowledge">{t('Wiki 与知识卡片')}</option><option value="cards">{t('仅旧知识卡片')}</option></>}
       </NativeSelect>
     </label>}
     <div className="recovery-toolbar">
       {desktop() && !recovery && <button className="secondary-button" disabled={busy} onClick={() => void run(async () => { await onCreate(); await refresh(); setMessage('自动备份已更新。'); })}><RefreshCw size={15} />{t("立即备份")}</button>}
-      {knowledgeScope && onExportKnowledge ? <button className="secondary-button" disabled={busy} onClick={() => void run(async () => { await onExportKnowledge(); setMessage('知识库已导出。'); })}><Download size={15} />{t("导出知识库")}</button>
-        : onExport && <><button className="secondary-button" disabled={busy} onClick={() => void run(() => onExport(false, scope === 'current'))}><Download size={15} />{t("导出备份")}</button><button className="secondary-button" disabled={busy} onClick={() => void run(() => onExport(true, scope === 'current'))}>{t("兼容旧版导出")}</button></>}
+      {knowledgeScope && onExportKnowledge ? <button className="secondary-button" disabled={busy} onClick={() => void run(async () => { await onExportKnowledge(scope === 'cards'); setMessage('知识库已导出。'); })}><Download size={15} />{t("导出知识库")}</button>
+        : onExport && <><button className="secondary-button" disabled={busy} onClick={() => void run(() => onExport(false, scope === 'current'))}><Download size={15} />{t("导出备份")}</button><button className="secondary-button" disabled={busy} onClick={() => void run(() => onExport(true, scope === 'current'))}>{t('导出旧版工作区（不含 Wiki）')}</button></>}
       <button className="secondary-button" disabled={busy} onClick={() => input.current?.click()}><FileUp size={15} />{t("从文件恢复")}</button>
     </div>
     <div className="recovery-list" aria-busy={busy}>

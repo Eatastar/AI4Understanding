@@ -316,6 +316,17 @@ export function AnnotatedAnswer({ conversationId, messageId, version, annotation
     }
   };
 
+  function selectionOffset(draft: SelectionDraft) {
+    const root = proseRef.current;
+    if (!root || !plainText && content == null) return draft.selector.start;
+    const walker=root.ownerDocument.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement?.closest('.not-annotatable')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+    const parts:string[]=[];let n:Node|null;
+    while ((n=walker.nextNode())) parts.push(n.textContent??'');
+    return sourceSelectionStart(version.content,parts.join(''),draft.selector);
+  }
+  const organizeSelection = (draft: SelectionDraft) => {
+    annotationActions?.toWiki?.(conversationId,messageId,version.id,{quote:draft.selector.quote,start:selectionOffset(draft)});
+  };
   const createAnnotation = (draft = selectionDraft, savedTranslation?: { text: string; model: string }) => {
     if (!draft || !isComplete || !annotatorRef.current || !proseRef.current?.isConnected) return false;
     const now = Date.now();
@@ -325,14 +336,7 @@ export function AnnotatedAnswer({ conversationId, messageId, version, annotation
     let colorIndex = 0;
     while (usedColors.has(annotationColor(colorIndex).toLowerCase())) colorIndex += 1;
     const nextColor = annotationColor(colorIndex);
-    let sourceStart:number|undefined;
-    if (plainText || content!=null) {
-      const root=proseRef.current;
-      const walker=root.ownerDocument.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement?.closest('.not-annotatable')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
-      const parts:string[]=[];let n:Node|null;
-      while ((n=walker.nextNode())) parts.push(n.textContent??'');
-      sourceStart=sourceSelectionStart(version.content,parts.join(''),draft.selector);
-    }
+    const sourceStart = selectionOffset(draft);
     try { onCreate({ id, conversationId, messageId, versionId: version.id, quote: draft.selector.quote, anchor: { selectors: [draft.selector], ...(sourceStart!==undefined?{sourceStart}:{}) } satisfies SavedAnchor, color: nextColor, mode: savedTranslation ? 'note' : 'ask', ...(savedTranslation ? { note: `${savedTranslation.text}\n\n${t('翻译模型：{0}', [savedTranslation.model])}` } : {}), question: '', answer: '', edited: false, status: savedTranslation ? 'noted' : 'draft', createdAt: now, updatedAt: now }); }
     catch (error) { if (savedTranslation) throw error; onNotify(error instanceof Error ? error.message : t("无法创建批注，请先导出备份。")); return false; }
     onOpen(id);
@@ -472,7 +476,8 @@ export function AnnotatedAnswer({ conversationId, messageId, version, annotation
       </details>}
       {selectionDraft && isComplete && createPortal(
         <div ref={selectionToolbarRef} className="annotation-selection-toolbar" style={readerStyle}>
-          <button type="button" className="annotation-selection-button" data-testid="create-annotation" onPointerDown={event => event.preventDefault()} onClick={() => createAnnotation()}><MessageSquarePlus size={15} />{t("添加批注")}</button>
+          <button type="button" className="annotation-selection-button" data-testid="create-annotation" onPointerDown={event => event.preventDefault()} onClick={() => createAnnotation()}><MessageSquarePlus size={15} />{t(plainText || content != null ? "问 AI" : "追问这句话")}</button>
+          {annotationActions?.toWiki && <button type="button" className="annotation-selection-button" onPointerDown={e=>e.preventDefault()} onClick={()=>organizeSelection(selectionDraft)}>{t('整理到 Wiki')}</button>}
           {onExperimentSelection && <button type="button" className="annotation-selection-button" onPointerDown={e => e.preventDefault()} onClick={() => captureExperiment(selectionDraft)}><FlaskConical size={15} />{t('加入实验')}</button>}
           {chatText?.enabled && <button type="button" className="annotation-selection-button quote-selection-button" onPointerDown={event => event.preventDefault()} onClick={() => quoteSelection(selectionDraft)}><MessageSquareQuote size={15} />{t('引用到聊天')}</button>}
         </div>, document.body,
@@ -520,11 +525,12 @@ export function AnnotatedAnswer({ conversationId, messageId, version, annotation
           onClick={(event) => event.stopPropagation()}
         >
           {answerMenu.selection && <>
+            {annotationActions?.toWiki && <button type="button" role="menuitem" onClick={()=>organizeSelection(answerMenu.selection!)}>{t('整理到 Wiki')}</button>}
             {onExperimentSelection && <button type="button" role="menuitem" onClick={() => captureExperiment(answerMenu.selection!)}><FlaskConical size={15} /><span>{t('加入实验')}</span></button>}
             {chatText?.enabled && <button type="button" role="menuitem" onClick={() => quoteSelection(answerMenu.selection!)}><MessageSquareQuote size={15} /><span>{t('引用到聊天')}</span></button>}
             {translation && <button type="button" role="menuitem" disabled={!translation.enabled} onClick={() => translateSelection(answerMenu.selection!)}><Languages size={15} /><span>{t('翻译选中文字')}</span><small>{shortcutLabel(translation.preferences.shortcut)}</small></button>}
             <button type="button" role="menuitem" onClick={() => void copyText(answerMenu.selection!.selector.quote)}><Copy size={15} /><span>{t("复制选中文字")}</span></button>
-            <button type="button" role="menuitem" onClick={() => createAnnotation(answerMenu.selection)}><MessageSquarePlus size={15} /><span>{t("为选中文字添加批注")}</span></button>
+            <button type="button" role="menuitem" onClick={() => createAnnotation(answerMenu.selection)}><MessageSquarePlus size={15} /><span>{t(plainText || content != null ? "问 AI" : "追问这句话")}</span></button>
             {menuAnnotations.length > 0 && <div role="separator" className="annotation-menu-separator" />}
           </>}
           {menuAnnotations.length > 1 && !menuAnnotation ? <>

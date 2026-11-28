@@ -7,15 +7,16 @@ import { confirmShortcut, confirmationScope } from '../hooks/confirmation-shortc
 import { getLocale, t } from '../i18n/locale';
 import type { Workspace } from '../domain/types';
 import type { KnowledgeCard } from '../domain/knowledge';
+import { WikiAiEdit } from './WikiAiEdit';
 import { FloatingReferencePanel } from './FloatingReferencePanel';
-import { legacyReaderReferences } from './legacy-reader-adapter';
+import { hasWikiSource, legacyReaderReferences } from './legacy-reader-adapter';
 import { citedReferences, sourceCitation } from './wiki-document';
 import { WIKI_REFERENCE_DRAG, wikiEditorExtensions, WikiNavigation, type FormulaEdit } from './wiki-editor';
 import { pasteWikiMarkdown, restoreClipboardMath } from './wiki-markdown';
 import { relationLabels, WikiFormulaForm, WikiLinkForm, WikiToolbar, type EntryLinkInput } from './WikiEditorForms';
 import type { ReferenceItem, SourceCitation, WikiDraft, WikiLink, WikiPage, WikiRecord, WikiRepository, WikiRevision } from './wiki-types';
 
-type EditorTool = { type: 'link' } | { type: 'formula'; formula: FormulaEdit };
+type EditorTool = {type:'ai'} | { type: 'link' } | { type: 'formula'; formula: FormulaEdit };
 
 export function wikiError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
@@ -24,6 +25,7 @@ export function wikiError(error: unknown) {
 
 interface Props {
   entry?: WikiRecord;
+  incoming?: ReferenceItem;
   blockId?: string;
   records: readonly WikiRecord[];
   workspace: Workspace;
@@ -34,9 +36,9 @@ interface Props {
   onOpenEntry: (id: string, blockId?: string) => void;
   onOpenCitation: (citation: SourceCitation) => void;
 }
-export function WikiPageView({ entry, blockId, records, workspace, cards, repository, flushRef, onStore, onOpenEntry, onOpenCitation }: Props) {
+export function WikiPageView({ entry, incoming: material, blockId, records, workspace, cards, repository, flushRef, onStore, onOpenEntry, onOpenCitation }: Props) {
   const [page, setPage] = useState(entry?.page);
-  const [editing, setEditing] = useState(!entry);
+  const [editing, setEditing] = useState(!entry || !!material);
   const [title, setTitle] = useState(page?.title ?? '');
   const [domains, setDomains] = useState(page?.domains.join(', ') ?? '');
   const [understanding, setUnderstanding] = useState(page?.personalUnderstanding ?? '');
@@ -55,7 +57,13 @@ export function WikiPageView({ entry, blockId, records, workspace, cards, reposi
   const editingRef = useRef(editing);
   editingRef.current = editing;
   const [extraSources, setExtraSources] = useState<ReadonlySet<string>>(() => new Set());
-  const references = useMemo(() => editing ? legacyReaderReferences(workspace, cards, records) : [], [editing, workspace, cards, records]);
+  const [browseSources,setBrowseSources] = useState(!material);
+  const [aiSources,setAiSources] = useState<readonly string[]>([]);
+  const references = useMemo(() => {
+    if (!editing) return [];
+    const items = browseSources ? legacyReaderReferences(workspace,cards,records) : [];
+    return material ? [material,...items.filter(item=>item.id!==material.id)] : items;
+  }, [editing,workspace,cards,records,material,browseSources]);
   const referencesRef = useRef(references);
   referencesRef.current = references;
   const indexed = useMemo(() => new Map(records.map(record => [record.page.id, record])), [records]);
@@ -260,11 +268,15 @@ export function WikiPageView({ entry, blockId, records, workspace, cards, reposi
     </div> : <header className="wiki-page-heading"><h1>{shown?.title}</h1>
       {!!shown?.domains.length && <div className="wiki-domain-labels">{shown.domains.map(domain => <span key={domain}>{domain}</span>)}</div>}
     </header>}
-    {editing && editor && <WikiToolbar editor={editor} onLink={() => setTool({ type: 'link' })}
+    {editing && editor && <WikiToolbar editor={editor} onAI={()=>{setAiSources([]);setTool({type:'ai'});}} onLink={() => setTool({ type: 'link' })}
       onFormula={kind => setTool({ type: 'formula', formula: { kind, latex: '' } })} />}
+    {editing && editor && tool?.type==='ai' && <WikiAiEdit editor={editor} references={references.filter(item=>aiSources.includes(item.id))} onClose={()=>setTool(null)}/>}
     {editing && tool?.type === 'formula' && <WikiFormulaForm key={tool.formula.kind + ':' + tool.formula.pos} formula={tool.formula} onCancel={() => setTool(null)} onApply={insertFormula} />}
     {editing && tool?.type === 'link' && <WikiLinkForm records={records} currentId={page?.id} onCancel={() => setTool(null)} onApply={insertLink} />}
-    <WikiNavigation.Provider value={{ records: indexed, openEntry: onOpenEntry, openCitation: onOpenCitation }}>
+    <WikiNavigation.Provider value={{
+      records: indexed, openEntry: onOpenEntry, openCitation: onOpenCitation,
+      hasSource: citation => hasWikiSource(workspace, cards, citation),
+    }}>
       <EditorContent editor={editor} className="wiki-editor-content" />
     </WikiNavigation.Provider>
     <details className="wiki-article-section" open={editing || undefined}>
@@ -279,7 +291,7 @@ export function WikiPageView({ entry, blockId, records, workspace, cards, reposi
       {incoming.length > 0 && <><h3>{t('反向引用')}</h3><ul>{links(incoming, true)}</ul></>}
       {!outgoing.length && !incoming.length && <p className="wiki-muted">{t('还没有条目链接。')}</p>}
     </details>
-    {editing && <FloatingReferencePanel items={references} pageId={page?.id} title={title}
+    {editing && <FloatingReferencePanel onBrowse={()=>setBrowseSources(true)} aiSources={tool?.type==='ai'?aiSources:undefined} toggleAI={id=>setAiSources(ids=>ids.includes(id)?ids.filter(v=>v!==id):[...ids,id])} pinnedId={material?.id} items={references} pageId={page?.id} title={title}
       citedSources={cited} onInsert={insertCitation} />}
   </section>;
 }

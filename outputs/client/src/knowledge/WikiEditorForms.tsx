@@ -15,8 +15,8 @@ export const relationLabels: Record<WikiRelation, string> = {
 };
 export interface EntryLinkInput { pageId: string; label: string; relation: WikiRelation; toBlockId?: string }
 
-export function WikiToolbar({ editor, onFormula, onLink }: {
-  editor: Editor; onFormula: (kind: FormulaEdit['kind']) => void; onLink: () => void;
+export function WikiToolbar({ editor, onFormula, onLink, onAI }: {
+  editor: Editor; onAI: ()=>void; onFormula: (kind: FormulaEdit['kind']) => void; onLink: () => void;
 }) {
   const state = useEditorState({
     editor, selector: ({ editor }) => ({
@@ -34,6 +34,7 @@ export function WikiToolbar({ editor, onFormula, onLink }: {
       <button type="button" aria-label={t('项目符号列表')} title={t('项目符号列表')} aria-pressed={state.list} onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={17} /></button>
     </div>
     <div>
+      <button type="button" onClick={onAI}>{t('AI 辅助编辑')}</button>
       <button type="button" onClick={onLink}><Link2 size={15} />{t('条目链接')}</button>
       <button type="button" onClick={() => onFormula('inline')}><Sigma size={15} />{t('行内公式')}</button>
       <button type="button" onClick={() => onFormula('block')}><Sigma size={15} />{t('块级公式')}</button>

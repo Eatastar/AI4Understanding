@@ -175,8 +175,8 @@ function createBackupStore({ directory, retain = 5, io = fs, now = Date.now, ver
     if (streaming?.active) throw new Error('另一份备份仍在写入，请稍后重试。');
     if (typeof text !== 'string' || Buffer.byteLength(text) > MAX_BYTES) throw new Error('完整备份超过 350 MB。');
     let data; try { data = JSON.parse(text); } catch { throw new Error('备份格式无效。'); }
-    const legacy = data?.schemaVersion === 1 && Array.isArray(data.conversations) && data.conversations.length && Object.keys(data).every(key => ['schemaVersion', 'conversations', 'activeConversationId', 'documentFiles'].includes(key));
-    const compact = data?.schemaVersion === 2 && Array.isArray(data.conversationIds) && data.conversationIds.length && Array.isArray(data.records) && Object.keys(data).every(key => ['schemaVersion', 'conversationIds', 'activeConversationId', 'records', 'documentFiles'].includes(key));
+    const legacy = data?.schemaVersion === 1 && Array.isArray(data.conversations) && data.conversations.length && Object.keys(data).every(key => ['schemaVersion', 'conversations', 'activeConversationId', 'documentFiles', 'knowledge'].includes(key));
+    const compact = data?.schemaVersion === 2 && Array.isArray(data.conversationIds) && data.conversationIds.length && Array.isArray(data.records) && Object.keys(data).every(key => ['schemaVersion', 'conversationIds', 'activeConversationId', 'records', 'documentFiles', 'knowledge'].includes(key));
     if ((!legacy && !compact) || (baseline && !legacy)) throw new Error('备份格式无效。');
     await prepare(); const protectedIds = await readBaselines(), previous = await list(), checksum = digest(text); let same;
     if (previous[0]?.id.endsWith(`-${checksum}.json`)) { try { await verify(join(directory, previous[0].id), checksum); same = previous[0]; } catch {} }

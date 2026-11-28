@@ -1,6 +1,10 @@
 const encoder = new TextEncoder();
 export const DEFAULT_INPUT_CAP = 12000;
 export const MAX_INPUT_CAP = 200000;
+// Local allowance only. Providers report the actual multimodal input after generation.
+export function selectionImageReserve(width, height) {
+  return 512 + 4 * Math.ceil(width / 32) * Math.ceil(height / 32);
+}
 
 // Both the planner and the transport count the actual serialized text. The
 // margin covers role framing. This is a local estimate, not provider usage.

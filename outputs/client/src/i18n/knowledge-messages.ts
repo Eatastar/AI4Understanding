@@ -38,4 +38,20 @@ export const knowledgeMessages = `
 请在桌面版导入知识库。|Import knowledge cards in the desktop app.|Importa las fichas en la aplicación de escritorio.|デスクトップ版でカードをインポートしてください。|請在桌面版匯入知識庫。|Importiere Wissenskarten in der Desktop-App.|استورد البطاقات في تطبيق سطح المكتب.|Importez les fiches dans l’application de bureau.
 查看正文|Read full card|Ver ficha completa|全文を表示|查看正文|Ganze Karte lesen|قراءة البطاقة كاملة|Lire la fiche entière
 收起正文|Collapse card|Contraer ficha|本文を折りたたむ|收合正文|Karte einklappen|طي البطاقة|Replier la fiche
+问 AI|Ask AI|Preguntar a la IA|AI に質問|問 AI|KI fragen|اسأل الذكاء الاصطناعي|Interroger l’IA
+追问这句话|Ask about this sentence|Preguntar sobre esta frase|この文について詳しく質問|追問這句話|Zu diesem Satz nachfragen|اسأل عن هذه الجملة|Poser une question sur cette phrase
+整理到 Wiki|Add to Wiki|Añadir a la wiki|Wiki にまとめる|整理到 Wiki|Ins Wiki übernehmen|أضف إلى الويكي|Ajouter au wiki
+存为知识卡片|Save as a knowledge card|Guardar como ficha|知識カードとして保存|存為知識卡片|Als Wissenskarte speichern|احفظ كبطاقة معرفة|Enregistrer comme fiche
+来源暂不可用|Source currently unavailable|Fuente no disponible|出典を現在開けません|來源暫不可用|Quelle derzeit nicht verfügbar|المصدر غير متاح حاليًا|Source actuellement indisponible
+Wiki 与知识卡片|Wiki and knowledge cards|Wiki y fichas|Wiki と知識カード|Wiki 與知識卡片|Wiki und Wissenskarten|الويكي وبطاقات المعرفة|Wiki et fiches
+仅旧知识卡片|Legacy cards only|Solo fichas anteriores|旧形式のカードのみ|僅舊知識卡片|Nur bisherige Wissenskarten|البطاقات القديمة فقط|Fiches anciennes uniquement
+原文出处|Original sources|Fuentes originales|原文の出典|原文出處|Originalquellen|المصادر الأصلية|Sources originales
+纠正这段回答|Correct this answer|Corregir esta respuesta|この回答を訂正|更正這段回答|Diese Antwort korrigieren|صحح هذه الإجابة|Corriger cette réponse
+用自己的话指出哪里需要改正|Describe what needs correcting in your own words|Explica qué hay que corregir|直したい箇所を自分の言葉で説明|用自己的話指出哪裡需要更正|Beschreibe, was korrigiert werden soll|اشرح بكلماتك ما الذي يحتاج إلى تصحيح|Indiquez ce qui doit être corrigé avec vos propres mots
+继续追问，或直接说哪里需要纠正…|Ask a follow-up or describe a correction…|Haz otra pregunta o indica una corrección…|続けて質問するか、訂正箇所を入力…|繼續追問，或直接說哪裡需要更正…|Nachfragen oder eine Korrektur beschreiben…|اسأل سؤالًا آخر أو اذكر ما يحتاج إلى تصحيح…|Posez une autre question ou indiquez une correction…
+AI 辅助编辑|Edit with AI|Editar con IA|AI 編集|AI 輔助編輯|Mit KI bearbeiten|تحرير بمساعدة الذكاء الاصطناعي|Modifier avec l’IA
+编辑指令|Editing instructions|Instrucciones de edición|編集の指示|編輯指令|Bearbeitungsanweisung|تعليمات التحرير|Consigne de modification
+生成草稿|Generate draft|Generar borrador|下書きを生成|產生草稿|Entwurf erstellen|إنشاء مسودة|Générer un brouillon
+草稿|Draft|Borrador|下書き|草稿|Entwurf|مسودة|Brouillon
+确认写入|Apply draft|Aplicar borrador|下書きを反映|確認寫入|Entwurf übernehmen|اعتماد المسودة|Appliquer le brouillon
 `.trim().split('\n').map(line => line.split('|'));

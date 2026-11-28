@@ -841,7 +841,7 @@ export function validateImport(input: unknown, cache?: ImportValidationCache, { 
 }
 
 /** Backups are appended as independent conversations, so importing can never overwrite live data. */
-export function mergeImportedWorkspace(current: Workspace, imported: Workspace, onRemap?: (oldId: string, newId: string) => void): Workspace {
+export function mergeImportedWorkspace(current: Workspace, imported: Workspace, onRemap?: (oldId: string, newId: string) => void, preserveFreeIds = false): Workspace {
   const cleanImport = validateImport(imported);
   validateImport(current);
   const usedIds = new Set<string>();
@@ -863,7 +863,8 @@ export function mergeImportedWorkspace(current: Workspace, imported: Workspace, 
   const remap = (oldId: string): string => {
     let newId = remappedIds.get(oldId);
     if (newId) return newId;
-    do { newId = makeId(); } while (usedIds.has(newId));
+    if (preserveFreeIds && !usedIds.has(oldId)) newId = oldId;
+    else do { newId = makeId(); } while (usedIds.has(newId));
     usedIds.add(newId);
     remappedIds.set(oldId, newId);
     onRemap?.(oldId, newId);

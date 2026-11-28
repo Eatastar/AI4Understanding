@@ -11,6 +11,7 @@ export interface ReaderPolicy {
 }
 export interface BranchRecord { excerpt?:string; mandatory?:boolean; question: string; answer: string; kind: 'answer' | 'note' | 'selection'; hash: string }
 export type SourceUse = 'focus' | 'proof' | 'condition' | 'nearby' | 'expanded';
+export type SelectionImageStatus = 'sent' | 'budget' | 'unsupported' | 'unavailable';
 export interface ReaderReport {
   version: 1;
   requestId: string;
@@ -31,6 +32,7 @@ export interface ReaderReport {
   costUSD?: number;
   usage?: TokenUsage;
   model?: string;
+  selectionImage?: SelectionImageStatus;
 }
 export interface ReaderPlan { report: ReaderReport; guard: ReaderGuard; messages: import('./types').InputMessage[] }
 export interface AnswerRevision { contextReport?: ReaderReport; hash: string; question: string; answer: string; kind: 'answer' | 'note' }
@@ -59,10 +61,11 @@ export function readReaderReport(raw: unknown): ReaderReport {
     return Object.keys(step).every(k=>k==='start'||k==='end') && natural(start) && natural(end) && end>start && end-start<=maxProofStepLength;
   };
   const list = (x:unknown,check:(s:string)=>boolean) => Array.isArray(x) && x.length<=10000 && x.every(v=>typeof v==='string' && check(v));
-  const fields = ['version','requestId','documentId','documentVersion','baseline','generation','sources','cited','branches','missing','dropped','estimatedInput','inputCap','outputCap','priced','maxEstimateUSD','costUSD','usage','model'];
+  const fields = ['version','requestId','documentId','documentVersion','baseline','generation','sources','cited','branches','missing','dropped','estimatedInput','inputCap','outputCap','priced','maxEstimateUSD','costUSD','usage','model','selectionImage'];
   const valid = Object.keys(r).every(k=>fields.includes(k)) && r.version===1 && string(r.requestId,128) && string(r.documentId,256)
     && hashPattern.test(String(r.documentVersion)) && hashPattern.test(String(r.generation)) && ['indexed','full'].includes(String(r.baseline))
     && Array.isArray(r.sources) && r.sources.length<=10000 && r.sources.every(s=>s && typeof s==='object' && Object.keys(s).every(k=>k==='id'||k==='use'||k==='step') && sourceIdPattern.test(s.id) && ['focus','proof','condition','nearby','expanded'].includes(s.use) && (s.step===undefined || s.use==='proof' && validStep(s.step)))
+    && (r.selectionImage===undefined || ['sent','budget','unsupported','unavailable'].includes(String(r.selectionImage)))
     && list(r.cited,x=>sourceIdPattern.test(x)) && list(r.branches,x=>hashPattern.test(x)) && list(r.missing,x=>x.length<=500)
     && ['dropped','estimatedInput','inputCap','outputCap'].every(k=>natural(r[k])) && typeof r.priced==='boolean'
     && ['maxEstimateUSD','costUSD'].every(k=>r[k]===undefined || (typeof r[k]==='number' && Number.isFinite(r[k]) && r[k]>=0))

@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('learnSomething', {
     list: () => ipcRenderer.invoke('learn:wiki-list'),
     save: draft => ipcRenderer.invoke('learn:wiki-save', draft),
     history: id => ipcRenderer.invoke('learn:wiki-history', id),
+    exportHistory: () => ipcRenderer.invoke('learn:wiki-exportHistory'),
+    importHistory: (pages, cards) => ipcRenderer.invoke('learn:wiki-importHistory', { pages, cards }),
     revision: key => ipcRenderer.invoke('learn:wiki-revision', key),
     restore: key => ipcRenderer.invoke('learn:wiki-restore', key),
   },

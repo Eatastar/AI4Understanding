@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {planReaderContext} from '../src/domain/reader-context';
-import {evidenceSearchHit, readingTask} from '../src/domain/reader-evidence';
+import {evidenceSearchHit} from '../src/domain/reader-evidence';
 import {finishReport,readReaderReport} from '../src/domain/reader-report';
 import type {DocumentAttachment} from '../src/domain/types';
 
@@ -30,9 +30,9 @@ test('locates the actual proof step under paraphrases and confines it to the req
   }
 });
 
-test('local and backward questions retain their scope; an unknown proof is recorded as missing',()=>{
-  assert.equal(readingTask('只解释我选中的这句话。'),'local');
-  assert.equal(readingTask('这个等号用了什么前提？'),'backward');
+test('a follow-up can retrieve a later use without an intent keyword; an unknown proof is recorded as missing',()=>{
+  const natural=planReaderContext({...base,question:'这个条件起了什么作用？'});
+  assert.ok(natural.report.sources.some(s=>s.step));
   const plan=planReaderContext({...base,question:'在后文定理 12 的证明哪里用到它？'});
   assert.ok(plan.report.missing.some(m=>m.includes('未找到')));
   assert.equal(plan.report.sources.some(s=>s.step),false);

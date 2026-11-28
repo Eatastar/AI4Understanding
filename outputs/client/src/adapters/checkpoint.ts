@@ -1,3 +1,4 @@
+import { snapshotKnowledge } from './knowledge-backup';
 import type { Workspace } from '../domain/types';
 import { desktop, type DesktopBridge } from './desktop';
 import { exportWorkspace, exportWorkspaceWithFiles, getDocumentBytes } from './storage';
@@ -9,12 +10,13 @@ export const BACKUP_CHUNK_BYTES = 256 * 1024;
 export async function writeLocalCheckpoint(workspace: Workspace, options: { compact?: boolean; baseline?: boolean; upgrade?: boolean } = {}, bridge: DesktopBridge | undefined = desktop()) {
   if (!bridge) throw new Error('本机备份不可用。');
   const backup = bridge.backups;
+  const exportOptions = { compact: options.compact !== false, knowledge: await snapshotKnowledge(bridge) };
   if (!backup.begin || !backup.append || !backup.finish || !backup.abort) {
-    const text = await exportWorkspaceWithFiles(workspace, { compact: options.compact !== false });
+    const text = await exportWorkspaceWithFiles(workspace, exportOptions);
     return options.baseline ? backup.baseline(text) : backup.write(text);
   }
   const documents = workspace.conversations.flatMap(item => item.documents || []);
-  const id = await backup.begin({ metadata: exportWorkspace(workspace, { compact: options.compact !== false }), files: documents.map(item => ({ documentId: item.id, size: item.size })), baseline: options.baseline, upgrade: options.upgrade });
+  const id = await backup.begin({ metadata: exportWorkspace(workspace, exportOptions), files: documents.map(item => ({ documentId: item.id, size: item.size })), baseline: options.baseline, upgrade: options.upgrade });
   try {
     for (let index = 0; index < documents.length; index++) {
       const document = documents[index], bytes = await getDocumentBytes(document.id);

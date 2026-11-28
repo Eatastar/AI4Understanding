@@ -121,6 +121,32 @@ test('a separate wiki persists formula and anchor data, derives backlinks and re
   assert.equal(await fs.readFile(legacy, 'utf8'), '[{"synthetic":true}]');
 });
 
+test('backup history merges without replacing local edits and a repeated import preserves links', async t => {
+  const dir = await fs.mkdtemp(join(tmpdir(), 'ai4u-wiki-merge-'));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const source = createWikiStore({ directory: join(dir, 'source') });
+  const target = createWikiStore({ directory: join(dir, 'target') });
+  const original = await source.save({ expectedRevision: 0, draft: draft('Original', document(paragraph('A'))) });
+  await target.importHistory(await source.exportHistory());
+  await target.save({ id: original.page.id, expectedRevision: 1, draft: draft('Local edit', document(paragraph('B'))) });
+  await source.save({ id: original.page.id, expectedRevision: 1, draft: draft('Imported edit', document(paragraph('C'))) });
+  await source.save({ expectedRevision: 0, draft: draft('Linked entry', document({
+    type: 'paragraph', content: [{ type: 'wikiLink', attrs: { label: 'Imported edit', pageId: original.page.id, relation: 'related' } }],
+  })) });
+  const history = await source.exportHistory();
+  const invalid = history.map(page => page.revision === 2 ? { ...page, revision: 3 } : page);
+  await assert.rejects(target.importHistory(invalid));
+  assert.equal((await target.list()).length, 1);
+  assert.equal(await target.importHistory(history), 2);
+  assert.equal(await target.importHistory(history), 0);
+  const result = await target.list();
+  assert.equal(result.length, 3);
+  assert.equal(result.find(item => item.page.id === original.page.id)?.page.title, 'Local edit');
+  const imported = result.find(item => item.page.title === 'Imported edit')!;
+  assert.deepEqual((await target.history(imported.page.id)).map(page => page.revision), [2, 1]);
+  assert.equal(result.find(item => item.page.title === 'Linked entry')?.links[0]?.toPageId, imported.page.id);
+});
+
 test('wiki serializes competing saves and a failed publish leaves the latest revision readable', async t => {
   const directory = await fs.mkdtemp(join(tmpdir(), 'ai4u-wiki-'));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
@@ -160,7 +186,7 @@ test('the reader adapter maps real legacy anchors, notes, AI and web records wit
   const items = legacyReaderReferences(workspace, [], []);
   const exact = items.find(item => item.kind === 'pdf_excerpt' && item.locator?.annotationId);
   assert.equal(exact?.content, root.quote);
-  assert.deepEqual(exact?.locator, { documentId: 'pdf', conversationId: 'project', page: 1, annotationId: 'note', quote: root.quote });
+  assert.deepEqual(exact?.locator, { documentId: 'pdf', conversationId: 'project', page: 1, messageId:'page', versionId:'text', annotationId: 'note', quote: root.quote });
   assert.equal(sourceCitation(exact!).locator.quote, root.quote);
   assert.equal(items.find(item => item.locator?.subAnnotationId === 'note-child')?.content, 'My personal note.');
   assert.equal(items.find(item => item.kind === 'ai_inquiry')?.content, 'A follow-up answer.');

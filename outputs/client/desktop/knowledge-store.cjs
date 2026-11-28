@@ -139,4 +139,4 @@ function createKnowledgeStore({ directory, io = fs, now = Date.now }) {
   };
 }
 
-module.exports = { createKnowledgeStore };
+module.exports = { createKnowledgeStore, parseCards };

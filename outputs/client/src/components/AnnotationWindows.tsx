@@ -14,7 +14,7 @@ type Reader = { source: DocumentAttachment; ownerId: string; annotations: Annota
 interface WindowSource {
   annotation: Annotation;
   sourceKey: string;
-  documentId?: string;
+  document?: DocumentAttachment;
   disabled: boolean;
 }
 interface Props {
@@ -37,10 +37,10 @@ export function AnnotationWindows(props: Props) {
   const sources = useMemo(() => {
     const found = new Map<string, WindowSource>();
     if (!windows.length) return found;
-    const include = (annotation: Annotation, ownerId: string, disabled: boolean, documentId?: string) => {
+    const include = (annotation: Annotation, ownerId: string, disabled: boolean, document?: DocumentAttachment) => {
       if (annotation.figure || annotation.deletedAt !== undefined) return;
       const sourceKey = `${ownerId}:${annotation.messageId}:${annotation.versionId}`;
-      found.set(annotation.id, { annotation, sourceKey, disabled, documentId });
+      found.set(annotation.id, { annotation, sourceKey, disabled, document });
     };
     if (chat) {
       const versions = new Map(chat.messages.map(message => [message.id, message.activeVersionId]));
@@ -48,7 +48,7 @@ export function AnnotationWindows(props: Props) {
     }
     if (reader) {
       const versions = new Map(reader.source.pages.map(page => [page.messageId, page.versionId]));
-      for (const annotation of reader.annotations) if (versions.get(annotation.messageId) === annotation.versionId) include(annotation, reader.ownerId, reader.disabled, reader.source.id);
+      for (const annotation of reader.annotations) if (versions.get(annotation.messageId) === annotation.versionId) include(annotation, reader.ownerId, reader.disabled, reader.source);
     }
     return found;
   }, [reader, chat, chatBusy, Boolean(windows.length)]);
@@ -93,7 +93,7 @@ function SourceAnnotationWindow({ source, slots, actions }: {
 }) {
   const context = useContext(AnnotationActions)!;
   const { anchors, windowOrder, dispatchWindow } = context;
-  const { annotation, sourceKey, documentId, disabled } = source;
+  const { annotation, sourceKey, disabled } = source;
   const groupId = annotationGroupId(annotation);
   const popup = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLElement>(null);
@@ -124,13 +124,13 @@ function SourceAnnotationWindow({ source, slots, actions }: {
     };
   }, [anchors, sourceKey, groupId]);
   const { id, conversationId: owner } = annotation;
-  const reference = (childId?: string) => actions.onReference(id, documentId, childId);
+  const reference = (childId?: string) => actions.onReference(id, source.document?.id, childId);
   return <MovableAnnotationPopup popupRef={popup} id={`annotation-window-${id}`} style={{ ...position, zIndex: windowOrder.get(id) }}
     onUserMoveOrResize={() => { moved.current = true; }}
     onActivate={() => dispatchWindow({ type: 'raise', id })}
     renderAttached={rect => <SubAnnotationWindows annotation={annotation} parentCard={card} parentRect={rect}
       parentId={id} parentQuote={annotation.quote} disabled={disabled || annotation.status === 'generating' || !!annotation.reask} onReferenceToChat={reference} />}>
-    <AnnotationCard key={id} cardRef={card} annotation={annotation} slots={slots} onSwitchSlot={actions.onOpen}
+    <AnnotationCard key={id} cardRef={card} annotation={annotation} sourceDocument={source.document} slots={slots} onSwitchSlot={actions.onOpen}
       onClose={() => actions.onClose([id])} onUpdate={patch => actions.onUpdate(owner, id, patch)} onAsk={() => actions.onAsk(owner, id)}
       onStop={() => actions.onStop(id)} onReask={action => actions.onReask(owner, id, action)} onDelete={() => actions.onDelete(owner, id)}
       onReferenceToChat={reference} disabled={disabled} />

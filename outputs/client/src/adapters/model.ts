@@ -1,4 +1,5 @@
 import type { InputMessage, ModelSettings, ProfileInput } from '../domain/types';
+import type { SelectionImageStatus } from '../domain/reader-report';
 import type { Connection, TokenUsage } from '../domain/paper-experiment';
 import { sortDiscoveredModels, type DiscoveredModel } from '../domain/model-list';
 export type { DiscoveredModel } from '../domain/model-list';
@@ -62,7 +63,7 @@ export async function streamTranslation(request: TranslationRequest, onDelta: (t
   return streamRequest('/api/translate', request, onDelta, signal);
 }
 
-interface ReplyResult { modelLabel: string; usage?: TokenUsage; readerEstimate?:number }
+interface ReplyResult { modelLabel: string; usage?: TokenUsage; readerEstimate?:number; readerImage?:SelectionImageStatus }
 async function streamRequest(path: string, request: (ReplyRequest & { connection?: Connection }) | TranslationRequest, onDelta: (text: string) => void, signal?: AbortSignal): Promise<ReplyResult> {
   signal?.throwIfAborted();
   const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: crypto.randomUUID(), ...request }), signal });
@@ -79,11 +80,11 @@ async function streamRequest(path: string, request: (ReplyRequest & { connection
     signal?.throwIfAborted();
     const data = event.split(/\r?\n/).filter(line => line.startsWith('data:')).map(line => line.slice(5).trimStart()).join('\n');
     if (!data) return;
-    let part: { type: string; text?: string; modelLabel?: string; message?: string; usage?: TokenUsage; readerEstimate?:number };
+    let part: { type: string; text?: string; modelLabel?: string; message?: string; usage?: TokenUsage; readerEstimate?:number; readerImage?:SelectionImageStatus };
     try { part = JSON.parse(data) as typeof part; }
     catch { throw new Error('回答的数据格式不正确，请重试。'); }
     if (part.type === 'delta' && typeof part.text === 'string') batch.push(part.text);
-    else if (part.type === 'done') result = { modelLabel: part.modelLabel || '所选模型', ...(part.readerEstimate!==undefined?{readerEstimate:part.readerEstimate}:{}), ...(part.usage ? { usage: part.usage } : {}) };
+    else if (part.type === 'done') result = { modelLabel: part.modelLabel || '所选模型', ...(part.readerEstimate!==undefined?{readerEstimate:part.readerEstimate}:{}), ...(part.readerImage?{readerImage:part.readerImage}:{}), ...(part.usage ? { usage: part.usage } : {}) };
     else if (part.type === 'error') throw new Error(part.message || '生成回答时遇到问题。');
   };
   try {

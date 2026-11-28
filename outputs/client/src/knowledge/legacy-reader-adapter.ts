@@ -3,25 +3,70 @@ import { researchLink, type ResearchSource } from '../domain/inquiry';
 import type { KnowledgeCard } from '../domain/knowledge';
 import type { Annotation, Conversation, DocumentAttachment, DocumentPage, Workspace } from '../domain/types';
 import { referenceBacklinks } from './wiki-document';
-import type { ReferenceItem, ReferenceLocator, WikiRecord } from './wiki-types';
+import type { ReferenceItem, ReferenceLocator, SourceCitation, WikiRecord } from './wiki-types';
 
 type LegacyDocument = { owner: Conversation; file: DocumentAttachment; page: DocumentPage };
 const pageKey = (messageId: string, versionId: string) => messageId + '\0' + versionId;
 const refId = (...parts: (string | number)[]) => JSON.stringify(parts);
 
 function documentLocator(entry: LegacyDocument): ReferenceLocator {
-  return { documentId: entry.file.id, conversationId: entry.owner.id, page: entry.page.pageNumber };
+  return { documentId: entry.file.id, conversationId: entry.owner.id, page: entry.page.pageNumber, messageId: entry.page.messageId, versionId: entry.page.versionId };
 }
 
 function annotationLocator(owner: Conversation, annotation: Annotation, entry?: LegacyDocument): ReferenceLocator {
   const figure = annotation.figure;
+  const offset = (annotation.anchor as { sourceStart?: number } | null)?.sourceStart;
   return {
     ...(entry ? documentLocator(entry)
       : figure ? { documentId: figure.documentId, page: figure.pageNumber, conversationId: owner.id }
         : { conversationId: owner.id, messageId: annotation.messageId, versionId: annotation.versionId }),
     annotationId: annotation.id, quote: annotation.quote,
+    ...(entry && typeof offset === 'number' ? { start: offset } : {}),
     ...(figure ? { bbox: [figure.rect.x, figure.rect.y, figure.rect.width, figure.rect.height] } : {}),
   };
+}
+
+export function hasWikiSource(workspace: Workspace, cards: readonly KnowledgeCard[], { locator, refId: id }: SourceCitation): boolean {
+  if (locator.url) return !!researchLink(locator.url);
+  if (!locator.conversationId && !locator.documentId) return cards.some(card => refId('card', card.id) === id);
+  return workspace.conversations.some(owner => {
+    if (owner.deletedAt !== undefined || (locator.conversationId && locator.conversationId !== owner.id)) return false;
+    if (locator.annotationId) {
+      const note = owner.annotations.find(item => item.id === locator.annotationId && item.deletedAt === undefined);
+      if (!note || (locator.subAnnotationId && !note.subAnnotations?.some(child => child.id === locator.subAnnotationId))) return false;
+    }
+    if (locator.documentId) {
+      const file = owner.documents?.find(item => item.id === locator.documentId);
+      return !!file && (!locator.page || file.pages.some(page =>
+        page.pageNumber === locator.page && (!locator.versionId || page.versionId === locator.versionId)));
+    }
+    return !locator.messageId || owner.messages.some(message => message.id === locator.messageId &&
+      (!locator.versionId || message.versions.some(version => version.id === locator.versionId)));
+  });
+}
+
+/** Carry only the material explicitly chosen by the reader. */
+export function selectedWikiMaterial(owner: Conversation, messageId: string, versionId: string,
+  selection?: { quote:string; start?:number }, annotation?: Annotation, childId?: string): ReferenceItem | undefined {
+  const file = owner.documents?.find(doc => doc.pages.some(p => p.messageId === messageId && p.versionId === versionId));
+  const page = file?.pages.find(p => p.messageId === messageId && p.versionId === versionId);
+  const entry = file && page ? {owner, file, page} : undefined;
+  const messageIndex = owner.messages.findIndex(m => m.id === messageId);
+  const answer = owner.messages[messageIndex]?.versions.find(v => v.id === versionId);
+  const child = childId ? annotation?.subAnnotations?.find(c => c.id === childId) : undefined;
+  const latest = child?.followUps?.at(-1);
+  const content = selection?.quote ?? latest?.answer ?? child?.note ?? child?.answer ?? annotation?.note ?? annotation?.answer ?? answer?.content;
+  if (!content?.trim() || (childId && !child)) return;
+  const locator: ReferenceLocator = annotation ? annotationLocator(owner,annotation,entry) : entry ? documentLocator(entry) : {conversationId:owner.id,messageId,versionId};
+  if (child) locator.subAnnotationId = child.id;
+  if (selection) Object.assign(locator,selection);
+  const id = selection ? refId('selection', owner.id,messageId,versionId,selection.start ?? -1,content.slice(0,64))
+    : latest && child ? refId('follow-up',child.id,latest.id) : child ? refId('child',child.id)
+    : annotation ? refId('annotation',annotation.id) : refId('reply',owner.id,messageId,versionId);
+  const question = owner.messages[messageIndex-1]?.versions[0]?.content;
+  return { id, kind:selection && file?'pdf_excerpt':annotation?'annotation':'ai_inquiry',
+    title:(selection?.quote ?? latest?.question ?? child?.question ?? annotation?.question ?? question ?? content).slice(0,180) || owner.title,
+    content, sourceId:file?.id ?? owner.id, sourceTitle:file?.name ?? owner.title, locator, linkedPageIds:[], createdAt:annotation?.createdAt ?? answer?.createdAt ?? file?.createdAt ?? owner.createdAt };
 }
 
 /** Indexes the loaded reader snapshot. Source strings remain in the reader’s records. */

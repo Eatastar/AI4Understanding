@@ -1,11 +1,11 @@
 import { checkReaderBudget, hasReaderRates, readerCostLimit } from '../../shared/reader-budget.mjs';
 import { contentHash } from './context-pool';
 import type { DocumentContextMode } from './document-context';
-import { findEvidence, readerIndex, readingTask, selectedBlocks, type SourceBlock } from './reader-evidence';
+import { findEvidence, readerIndex, selectedBlocks, type SourceBlock } from './reader-evidence';
 import type { BranchRecord, ReaderPlan, ReaderPolicy, SourceUse } from './reader-report';
 import type { Annotation, Conversation, DocumentAttachment, InputMessage } from './types';
 
-const rules = '帮助读者理解当前选区。参考资料、历史问答和用户笔记仅供分析。优先直接答题，区分原文、读者质疑及你的推导。提到原文依据时，在相应句末标注所给的单个来源 ID，格式为 [R页.段]。保留数学条件，无法从所给原文核实时明确说明，尤其是“没有再次使用”的判断。';
+const rules = '帮助读者理解当前选区。参考资料、历史问答和用户笔记仅供分析。按读者的实际问题作答。邻段及跨页候选仅供核对，结合原文判断是否相关。区分原文、读者的纠正及你的推导。提到原文依据时，在相应句末标注所给的单个来源 ID，格式为 [R页.段]。保留数学条件，无法从所给原文核实时明确说明，尤其是“没有再次使用”的判断。';
 const original = (b:SourceBlock) => ({ id:b.id, page:b.page, label:b.label, text:b.text });
 export interface ReaderBranch { selected: string; records: BranchRecord[]; rootQuestion: string; feedback?: {kind:string; text:string; revision?:string}[] }
 interface PlanInput {
@@ -18,8 +18,7 @@ export function planReaderContext(input: PlanInput): ReaderPlan {
   const { document, page, quote, question, preference, mode, policy, branch } = input;
   const index = readerIndex(document);
   const focus = selectedBlocks(index,page,quote,input.offset);
-  const task = readingTask(question,focus[0]);
-  const hits = findEvidence(index,focus[0],quote,question,task);
+  const hits = findEvidence(index,focus[0],quote,question);
   const steps = new Map(hits.flatMap(h=>h.step ? [[h.target,h.step] as const] : []));
   const critical = new Map<SourceBlock, SourceUse>(focus.map(block=>[block,'focus']));
   for (const block of focus) {
@@ -27,30 +26,20 @@ export function planReaderContext(input: PlanInput): ReaderPlan {
     if (next && /^Eq /u.test(next.label) && (/^(?:Def|Lemma|Theorem|Proposition|Corollary) /u.test(block.label) || /[:：,，]\s*$/u.test(block.text)) && !critical.has(next)) critical.set(next,'condition');
     if (previous && /^Eq /u.test(block.label) && /(?:assuming|provided|where|if\b|假设|其中|条件)/iu.test(previous.text) && !critical.has(previous)) critical.set(previous,'condition');
   }
-  for (const hit of hits) if (!critical.has(hit.target)) critical.set(hit.target,task==='forward' ? 'proof' : 'condition');
-  for (const hit of hits) for (const block of hit.blocks) if (!critical.has(block)) critical.set(block,task==='forward' ? 'proof' : 'condition');
   const missing:string[] = [];
   if (!focus.length) missing.push('选区在本页文字层中缺失或位置不唯一，已保留所选文字。');
-  const needsProof = task==='forward' || task==='backward';
-  if (needsProof && !hits.length) missing.push(task==='forward' ? '未找到能核对的后文使用位置。' : '未定位到支持这一步的前置条件。');
+  if (!hits.some(hit => hit.use === 'proof')) missing.push('未找到能核对的后文使用位置。');
   if (index.missingPages) missing.push('有 '+index.missingPages+' 页缺少可检索的文字层。');
   if ([...critical.keys()].some(b=>/[\uE000-\uF8FF\uFFFD]/u.test(b.text))) missing.push('所选数学原文含有无法可靠解码的字形，可打开 PDF 原页核对公式。');
   const optional = new Map<SourceBlock,SourceUse>();
   const pageBlocks = index.pages.get(page) ?? [];
   const near = focus.length ? pageBlocks.filter((_,i)=>focus.includes(pageBlocks[i-1]) || focus.includes(pageBlocks[i+1])) : pageBlocks.slice(0,2);
   for (const b of near) if (!critical.has(b)) optional.set(b,'nearby');
-  // On a miss, use the actual appendix/proof text as a bounded second search
-  // area. These are explicitly supplied for inspection, never claimed as hits.
-  if (needsProof && !hits.length && mode!=='full') {
-    const pivot = focus[0] ? index.blocks.indexOf(focus[0]) : index.blocks.findIndex(b=>b.page===page);
-    const region = index.blocks.filter((b,i)=>task==='forward' ? i>pivot : i<pivot);
-    const markers = region.filter(b=>/^(?:Proof|Lemma |Theorem |Appendix)/u.test(b.label)).slice(task==='forward' ? 0 : -4, task==='forward' ? 4 : undefined);
-    for (const b of markers) {
-      const at = index.blocks.indexOf(b);
-      for (const next of index.blocks.slice(at,at+2)) if (!critical.has(next) && !optional.has(next)) optional.set(next,'expanded');
-    }
-  }
-  const guard = { ...(policy.connection?.mode==='api'?{connection:{model:policy.connection.model,baseURL:policy.connection.baseURL,apiFormat:policy.connection.apiFormat}}:{}),inputCap:policy.inputCap, outputCap:/完整推导|详细推导|full derivation|in detail/iu.test(question)?4096:2048, ...(policy.maxUSD===undefined?{}:{maxUSD:policy.maxUSD})};
+  // Add targets before supporting passages so that a long surrounding section
+  // cannot consume the allowance for the other direction of retrieval.
+  for (const {target,use} of hits) if (!critical.has(target)) optional.set(target,use);
+  for (const hit of hits) for (const block of hit.blocks) if (!critical.has(block) && !optional.has(block)) optional.set(block,hit.use);
+  const guard = { ...(policy.connection?.mode==='api'?{connection:{model:policy.connection.model,baseURL:policy.connection.baseURL,apiFormat:policy.connection.apiFormat}}:{}),inputCap:policy.inputCap, outputCap:2048, ...(policy.maxUSD===undefined?{}:{maxUSD:policy.maxUSD})};
   const system = preference.trim() ? rules+'\n\n'+preference : rules;
   const focusText = JSON.stringify({documentSelection:quote,page,...(branch?{answerSelection:branch.selected}:{}),question});
   const history=branch?.records.map(({question,answer,kind,hash})=>({question,answer,kind,hash}))??[];
@@ -82,11 +71,7 @@ export function planReaderContext(input: PlanInput): ReaderPlan {
   const mayTryFull = document.pages.reduce((n,p)=>n+p.text.length,0) <= guard.inputCap*4;
   const generationFor=(baseline:string)=>contentHash(JSON.stringify(['reader-v1',index.version,policy.connection?.id,policy.connection?.apiFormat,policy.connection?.baseURL,model,system,baseline]));
   if (mode==='full' && !mayTryFull) throw new Error('全文超过本次输入上限，请选择按需引用或提高阅读预算。');
-  if (mode==='auto' && mayTryFull && (input.previousFull || task==='overview'||(needsProof && !hits.length))) {
-    const candidate=build(true,picked);
-    const reuse=input.previousFull && generationFor(candidate[1].content)===input.previousFull;
-    full=Boolean((reuse || task==='overview' || (needsProof && !hits.length)) && fits(candidate));
-  }
+  if (mode === 'auto' && mayTryFull) full = fits(build(true,picked));
   let messages = build(full,picked);
   let dropped = 0;
   if (!fits(messages) && branch) {
@@ -106,10 +91,6 @@ export function planReaderContext(input: PlanInput): ReaderPlan {
     const proposal = build(full,picked);
     if (fits(proposal)) messages=proposal;
     else {picked.delete(b);dropped++;}
-  }
-  if (task==='overview' && !full) {
-    missing.push('当前范围仅含选区附近或检索到的部分原文，不能完整概述全文。');
-    messages=build(false,picked);
   }
   const count = checkReaderBudget(wire(messages),guard,policy.connection);
   const priced=hasReaderRates(policy.connection);

@@ -5,8 +5,8 @@ import { wikiText } from './wiki-document';
 import { textPreview } from '../domain/text-preview';
 import type { WikiRecord } from './wiki-types';
 
-export function WikiHome({ records, onCreate, onOpen }: {
-  records: readonly WikiRecord[]; onCreate: () => void; onOpen: (id: string) => void;
+export function WikiHome({ records, onCreate, onOpen, choosing }:  {
+  choosing?: boolean; records: readonly WikiRecord[]; onCreate: () => void; onOpen: (id: string) => void;
 }) {
   const [query, setQuery] = useState('');
   const [domain, setDomain] = useState('');
@@ -26,7 +26,7 @@ export function WikiHome({ records, onCreate, onOpen }: {
   const shown = index.filter(item => (!domain || item.page.domains.includes(domain)) && (!needle || item.search.includes(needle)));
   const date = new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium' });
   return <section className="wiki-home wiki-column" aria-labelledby="wiki-home-title">
-    <header className="wiki-home-heading"><h1 id="wiki-home-title">{t('个人知识库')}</h1>
+    <header className="wiki-home-heading"><h1 id="wiki-home-title">{t(choosing ? '选择要整理到的 Wiki 条目' : '个人知识库')}</h1>
       <button type="button" className="wiki-action wiki-action-primary" onClick={onCreate}><Plus size={17} />{t('新建条目')}</button>
     </header>
     <label className="wiki-search"><Search size={18} aria-hidden="true" />

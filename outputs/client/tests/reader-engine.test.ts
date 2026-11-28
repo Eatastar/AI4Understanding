@@ -30,8 +30,10 @@ const workspace=(c:Conversation):Workspace=>({schemaVersion:1,conversations:[c],
 test('ordinary selection sends only authorized document evidence, including its cross-page proof, owner and equation',()=>{
   const {c,a,d}=fixture();
   const {plan}=prepareAnnotationRequest(c,a.id,'user preference',{engine:policy});
-  assert.ok(plan);assert.equal(plan.report.baseline,'indexed');
-  const packet=JSON.parse(plan.messages[2].content);
+  assert.ok(plan);assert.equal(plan.report.baseline,'full');
+  const blocks=JSON.parse(plan.messages[1].content).blocks;
+  const refs=JSON.parse(plan.messages[2].content).references;
+  const packet={references:refs.map((r:{id:string})=>({...blocks.find((b:{id:string})=>b.id===r.id),...r}))};
   assert.ok(packet.references.some((r:{label:string})=>r.label==='Lemma 2'));
   assert.ok(packet.references.some((r:{label:string})=>r.label==='Case 2'));
   assert.ok(packet.references.some((r:{page:number;label:string})=>r.page===4 && r.label==='Eq 8'));

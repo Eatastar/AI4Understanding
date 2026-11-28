@@ -2,7 +2,7 @@
   <title>AI4U</title>
   <rect width="512" height="512" rx="112" fill="#F6F4ED" />
   <g fill="none" stroke="#1E1B3A" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10">
-    <path d="M 164 190 L 104 166 L 104 333 L 256 416 L 408 333 L 408 166 L 348 190" />
+    <path d="M 136 178.8 L 104 166 L 104 333 L 256 416 L 408 333 L 408 166 L 376 178.8" />
     <path d="M 136 134 L 236 174 L 256 202 L 276 174 L 376 134 L 376 318 L 256 384 L 136 318 Z" />
     <path d="M 256 202 L 256 226" />
     <path d="M 256 336 L 256 416" />

@@ -92,7 +92,7 @@ export function ReaderHome({ menu, recent, conversations, busy, loading, explore
     </header>
     <div className="reader-home-content">
       <div className="inquiry-home-intro">
-        <h1>{t('从一个问题开始')}</h1>
+        <h1><BrandLogo size={72} /><span>{t('从一个问题开始')}</span></h1>
         <form className="inquiry-search-form" onSubmit={event => {
           event.preventDefault();
           const action = homeQuestionAction(question, syncSearch);
