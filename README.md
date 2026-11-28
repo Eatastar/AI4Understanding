@@ -14,9 +14,9 @@ A few years ago, language models could stumble over simple counting. In November
 
 I believe the understanding we gain for ourselves is one of the most precious experiences we can have, and one of the most valuable things we can call our own. The beauty of how nature works keeps drawing us in and makes us want to understand it. That impulse is why I built this tool.
 
-我短暂试用过 LLM for Zotero 和 AtlasWork，也初步了解过 Heptabase 和阿里巴巴达摩院的相关工作。这些工具给了我整理文献和笔记的思路。精读时，我更希望能在卡住的那一行提问，重读时就在原处找到讨论，省去翻找右侧长对话的工夫。
+开发者自己轻度试用了目前市面上类似的产品，包括llm-for-zetore, atlaswork等，也粗略了解了阿里达摩院，heptabase等产品，发现它们在整理文献、知识的方面有着很强大的功能，但是在个人精读方面的使用体验仍然不算丝滑，尤其是当前很多软件喜欢把ai聊天框简单放在右侧栏，就个人体验来说用起来有点别扭，并且仍然需要面临在长对话中反复翻找的困境。
 
-I briefly tried LLM for Zotero and AtlasWork, and looked into Heptabase and related work from Alibaba’s DAMO Academy. They gave me ideas for organizing papers and notes. When I’m reading closely, I want to ask a question beside the line that puzzled me and find the discussion there when I return, without scrolling back through a long sidebar chat.
+I briefly tried LLM for Zotero and AtlasWork, and took a quick look at Heptabase and related work from Alibaba’s DAMO Academy. These tools are powerful for organizing papers and notes, but reading a paper closely felt less natural to me. Many apps put AI chat in a right-hand sidebar. I find that placement awkward, and finding an earlier answer still means scrolling back through a long conversation.
 
 顺便吐槽一句，GPT-6.2 真难用。
 
