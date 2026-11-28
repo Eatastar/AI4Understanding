@@ -1,4 +1,4 @@
-## AI 辅助个人阅读与知识整理 / AI-assisted reading and personal knowledge management
+## AI for Understanding / AI4U
 
 <img src="./outputs/client/public/assets/ai4u-logo.svg" alt="AI4U" width="80" height="80" align="right">
 
