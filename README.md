@@ -1,7 +1,23 @@
-# AI4Understanding (AI4U)
+# <img src="./outputs/client/public/assets/ai4u-logo.svg" alt="AI4U" width="80" height="80" align="middle"> AI4Understanding
 
-**AI 辅助个人阅读与知识整理**<br>
-**AI-assisted reading and personal knowledge management**
+1. **[下载 Windows x64 试用版（v0.1.46-preview.69，ZIP）][windows-zip]**。<br>
+   **[Download the Windows x64 preview (v0.1.46-preview.69, ZIP)][windows-zip]**.
+2. 右键点击下载的 ZIP，选择「全部解压」。<br>
+   Right-click the downloaded ZIP file and choose **Extract All**.
+3. 打开解压后的文件夹，双击 **`AI4Understanding.exe`** 启动。<br>
+   Open the extracted folder and double-click **`AI4Understanding.exe`** to launch the app.
+
+[发布说明与 SHA-256 校验文件 / Release notes and SHA-256 checksum][release]
+
+目前只提供 **Windows x64** 试用包。待产品成熟后，我们会发布 macOS 和 Linux 版本。
+
+This preview is available for **64-bit Windows (x64)**. We plan to release macOS and Linux versions once the app is more mature.
+
+首次打开可以先试用本地演示模式。要让 AI 回答自己的问题，在工作台右上角打开模型菜单，点「配置 API」添加自己的模型连接。
+
+You can start in local demo mode. To get answers from a live model, open the model menu in the upper-right corner of the workbench and choose **Configure API** to connect your model provider.
+
+## AI 辅助个人阅读与知识整理 / AI-assisted reading and personal knowledge management
 
 AI4Understanding 是一款基于「AI 嵌入式论文 PDF 阅读器」（AI-Embedded Paper PDF Reader）的新产品，目前仍在开发中。读者可以围绕论文或书中的一段原文向 AI 提问，核对回答引用的段落，再把自己的理解整理进个人知识库。
 
@@ -23,25 +39,6 @@ The feature set is much the same as in the original AI reader, and most interact
   While **reading** a PDF or ebook from your computer, select a passage to ask AI about it, translate it, or add a note. Your question stays linked to that spot in the text.
 - 在**个人 Wiki** 中，可以把聊天回答、原文选区和批注整理进条目，编辑文字和公式、链接其他条目，再点来源返回原文。<br>
   Bring chat replies, selected passages, and annotations into your **personal wiki**. You can edit text and equations, link entries to one another, and follow a source link back to the original passage.
-
-## Windows 试用版 / Try it on Windows
-
-目前只提供 **Windows x64** 试用包。待产品成熟后，我们会发布 macOS 和 Linux 版本。
-
-This preview is available for **64-bit Windows (x64)**. We plan to release macOS and Linux versions once the app is more mature.
-
-1. [下载 v0.1.46-preview.69 的 Windows ZIP][windows-zip]。<br>
-   [Download the Windows ZIP for v0.1.46-preview.69][windows-zip].
-2. 右键点击下载的 ZIP，选择「全部解压」。<br>
-   Right-click the downloaded ZIP file and choose **Extract All**.
-3. 打开解压后的文件夹，双击 **`AI4Understanding.exe`** 启动。<br>
-   Open the extracted folder and double-click **`AI4Understanding.exe`** to launch the app.
-
-首次打开可以先试用本地演示模式。要让 AI 回答自己的问题，在工作台右上角打开模型菜单，点「配置 API」添加自己的模型连接。
-
-You can start in local demo mode. To get answers from a live model, open the model menu in the upper-right corner of the workbench and choose **Configure API** to connect your model provider.
-
-[发布说明与 SHA-256 校验文件 / Release notes and SHA-256 checksum][release]
 
 [windows-zip]: https://github.com/Eatastar/AI4Understanding/releases/download/v0.1.46-preview.69/AI4Understanding-0.1.46-preview.69-Windows-x64.zip
 [release]: https://github.com/Eatastar/AI4Understanding/releases/tag/v0.1.46-preview.69
